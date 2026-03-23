@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Barbeiros</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<script>
+  // 🔐 proteção simples
+  const senha = prompt("Senha admin:");
+
+  if (senha !== "atomo123'") {
+    alert("Acesso negado");
+    window.location.href = "index.html";
+  }
+</script>
+
+<div class="container">
+  <h1>Cadastrar Barbeiro</h1>
+
+  <input type="text" id="nomeBarbeiro" placeholder="Nome">
+  <input type="text" id="loginBarbeiro" placeholder="Login">
+  <input type="password" id="senhaBarbeiro" placeholder="Senha">
+
+  <button onclick="cadastrarBarbeiro()">Cadastrar</button>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+<script src="script.js"></script>
+
+<script>
+  async function cadastrarBarbeiro() {
+    const nome = document.getElementById("nomeBarbeiro").value;
+    const login = document.getElementById("loginBarbeiro").value;
+    const senha = document.getElementById("senhaBarbeiro").value;
+
+    await db.collection("barbeiros").add({
+      nome,
+      login,
+      senha
+    });
+
+    alert("Barbeiro cadastrado!");
+  }
+</script>
+
+</body>
+</html>

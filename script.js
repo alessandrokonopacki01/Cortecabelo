@@ -188,3 +188,17 @@ async function carregarBarbeiros() {
 }
 
 carregarBarbeiros();
+
+async function cadastrarBarbeiro() {
+  const nome = document.getElementById("nomeBarbeiro").value;
+  const login = document.getElementById("loginBarbeiro").value;
+  const senha = document.getElementById("senhaBarbeiro").value;
+
+  await db.collection("barbeiros").add({
+    nome,
+    login,
+    senha
+  });
+
+  alert("Barbeiro cadastrado!");
+}
