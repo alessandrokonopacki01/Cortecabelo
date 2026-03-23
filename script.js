@@ -100,5 +100,48 @@ async function carregarHorarios() {
   });
 }
 
+//pagina dos barbeiros
+
 document.getElementById("data")
   .addEventListener("change", carregarHorarios);
+
+  async function carregarAgendaDoDia() {
+  const container = document.getElementById("listaAgendamentos");
+
+  if (!container) return; // evita erro na outra página
+
+  container.innerHTML = "";
+
+  const hoje = new Date().toISOString().split("T")[0];
+
+  const snapshot = await db.collection("agendamentos").get();
+
+  const lista = [];
+
+  snapshot.forEach(doc => {
+    const ag = doc.data();
+
+    if (ag.data.startsWith(hoje)) {
+      lista.push(ag);
+    }
+  });
+
+  // ordena por horário
+  lista.sort((a, b) => a.data.localeCompare(b.data));
+
+  lista.forEach(ag => {
+    const hora = ag.data.split("T")[1].substring(0,5);
+
+    const div = document.createElement("div");
+    div.classList.add("card");
+
+    div.innerHTML = `
+      <strong>${hora}</strong><br>
+      ${ag.nome}<br>
+      ${ag.servico}<br>
+      <a href="https://wa.me/${ag.whatsapp}" target="_blank">WhatsApp</a>
+    `;
+
+    container.appendChild(div);
+  });
+}
