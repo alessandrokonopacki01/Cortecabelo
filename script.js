@@ -1,18 +1,17 @@
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyA62D2gCNSPGtuZkPcNQxAQCI10T7leF8s",
   authDomain: "cortedoleo-825fa.firebaseapp.com",
   projectId: "cortedoleo-825fa",
   storageBucket: "cortedoleo-825fa.firebasestorage.app",
   messagingSenderId: "120441801182",
-  appId: "1:120441801182:web:411d83e4e7fa26d568354f",
-  measurementId: "G-T8G21B538V"
+  appId: "1:120441801182:web:411d83e4e7fa26d568354f"
 };
 
-// Initialize Firebase
+// Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+
+// 🔥 ESSA LINHA ESTAVA FALTANDO
+const db = firebase.firestore();
 
 // Formulário
 document.getElementById("formAgendamento")
