@@ -32,12 +32,13 @@ const data = `${dataBase}T${hora}`;
 
   try {
     await db.collection("agendamentos").add({
-      nome,
-      whatsapp,
-      servico,
-      data,
-      criadoEm: new Date()
-    });
+  nome,
+  whatsapp,
+  servico,
+  data,
+  status: "pendente",
+  criadoEm: new Date()
+});
 
     alert("Agendamento realizado!");
 carregarHorarios();
@@ -107,41 +108,61 @@ document.getElementById("data")
 
   async function carregarAgendaDoDia() {
   const container = document.getElementById("listaAgendamentos");
-
   if (!container) return; // evita erro na outra página
-
   container.innerHTML = "";
-
-  const hoje = new Date().toISOString().split("T")[0];
-
+  const dataInput = document.getElementById("dataFiltro").value;
+const hoje = dataInput || new Date().toISOString().split("T")[0];
   const snapshot = await db.collection("agendamentos").get();
-
   const lista = [];
-
+  
   snapshot.forEach(doc => {
-    const ag = doc.data();
+  const ag = doc.data();
+  ag.id = doc.id; // 🔥 ESSENCIAL
 
-    if (ag.data.startsWith(hoje)) {
-      lista.push(ag);
-    }
-  });
+  if (ag.data.startsWith(hoje)) {
+    lista.push(ag);
+  }
+});
 
   // ordena por horário
-  lista.sort((a, b) => a.data.localeCompare(b.data));
+lista.forEach((ag, index) => {
+  const hora = ag.data.split("T")[1].substring(0,5);
 
-  lista.forEach(ag => {
-    const hora = ag.data.split("T")[1].substring(0,5);
+  const div = document.createElement("div");
+  div.classList.add("card");
 
-    const div = document.createElement("div");
-    div.classList.add("card");
+  div.innerHTML = `
+    <strong>${hora}</strong><br>
+    ${ag.nome}<br>
+    ${ag.servico}<br>
+    Status: ${ag.status || "pendente"}<br><br>
 
-    div.innerHTML = `
-      <strong>${hora}</strong><br>
-      ${ag.nome}<br>
-      ${ag.servico}<br>
-      <a href="https://wa.me/${ag.whatsapp}" target="_blank">WhatsApp</a>
-    `;
+    <button onclick="concluir('${ag.id}')">✔️ Concluir</button>
+    <button onclick="cancelar('${ag.id}')">❌ Cancelar</button>
+  `;
 
-    container.appendChild(div);
-  });
+  container.appendChild(div);
+});
 }
+
+lista.forEach((ag, index) => {
+  const hora = ag.data.split("T")[1].substring(0,5);
+
+  const div = document.createElement("div");
+  div.classList.add("card");
+
+  div.innerHTML = `
+    <strong>${hora}</strong><br>
+    ${ag.nome}<br>
+    ${ag.servico}<br>
+    Status: ${ag.status || "pendente"}<br><br>
+
+    <button onclick="concluir('${ag.id}')">✔️ Concluir</button>
+    <button onclick="cancelar('${ag.id}')">❌ Cancelar</button>
+  `;
+
+  container.appendChild(div);
+});
+
+document.getElementById("dataFiltro")
+.addEventListener("change", carregarAgendaDoDia);
