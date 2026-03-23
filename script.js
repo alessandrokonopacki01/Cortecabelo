@@ -1,14 +1,26 @@
-// CONFIG FIREBASE (cole o seu aqui)
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "SUA_KEY",
-  authDomain: "SEU_DOMINIO",
-  projectId: "SEU_ID",
+  apiKey: "AIzaSyA62D2gCNSPGtuZkPcNQxAQCI10T7leF8s",
+  authDomain: "cortedoleo-825fa.firebaseapp.com",
+  projectId: "cortedoleo-825fa",
+  storageBucket: "cortedoleo-825fa.firebasestorage.app",
+  messagingSenderId: "120441801182",
+  appId: "1:120441801182:web:411d83e4e7fa26d568354f",
+  measurementId: "G-T8G21B538V"
 };
 
-// Inicializar
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
+// Formulário
 document.getElementById("formAgendamento")
 .addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -18,13 +30,18 @@ document.getElementById("formAgendamento")
   const servico = document.getElementById("servico").value;
   const data = document.getElementById("data").value;
 
-  await db.collection("agendamentos").add({
-    nome,
-    whatsapp,
-    servico,
-    data,
-    criadoEm: new Date()
-  });
+  try {
+    await db.collection("agendamentos").add({
+      nome,
+      whatsapp,
+      servico,
+      data,
+      criadoEm: new Date()
+    });
 
-  alert("Agendamento realizado!");
+    alert("Agendamento realizado!");
+  } catch (erro) {
+    console.error(erro);
+    alert("Erro ao salvar.");
+  }
 });
