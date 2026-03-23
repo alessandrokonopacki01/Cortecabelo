@@ -20,6 +20,7 @@ document.getElementById("formAgendamento")
 
   const nome = document.getElementById("nome").value;
   const whatsapp = document.getElementById("whatsapp").value;
+  const barbeiro = document.getElementById("barbeiro").value;
   const servico = document.getElementById("servico").value;
   const dataBase = document.getElementById("data").value;
   const hora = document.getElementById("horaSelecionada").value;
@@ -35,6 +36,7 @@ const data = `${dataBase}T${hora}`;
   nome,
   whatsapp,
   servico,
+  barbeiro,
   data,
   status: "pendente",
   criadoEm: new Date()
@@ -166,3 +168,23 @@ lista.forEach((ag, index) => {
 
 document.getElementById("dataFiltro")
 .addEventListener("change", carregarAgendaDoDia);
+
+async function carregarBarbeiros() {
+  const select = document.getElementById("barbeiro");
+
+  const snapshot = await db.collection("barbeiros").get();
+
+  select.innerHTML = "";
+
+  snapshot.forEach(doc => {
+    const b = doc.data();
+
+    const option = document.createElement("option");
+    option.value = b.nome;
+    option.textContent = b.nome;
+
+    select.appendChild(option);
+  });
+}
+
+carregarBarbeiros();
