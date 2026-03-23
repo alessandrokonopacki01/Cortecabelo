@@ -63,3 +63,36 @@ select {
   -webkit-appearance: none;
   -moz-appearance: none;
 }
+
+.horarios-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.horario-btn {
+  padding: 10px;
+  background: #2a2a2a;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.3s;
+  border: 1px solid transparent;
+}
+
+.horario-btn:hover {
+  border: 1px solid #d4af37;
+}
+
+.horario-btn.selected {
+  background: #d4af37;
+  color: black;
+  font-weight: bold;
+}
+
+.horario-btn.ocupado {
+  background: #444;
+  color: #888;
+  cursor: not-allowed;
+}

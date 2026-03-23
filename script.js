@@ -22,8 +22,12 @@ document.getElementById("formAgendamento")
   const whatsapp = document.getElementById("whatsapp").value;
   const servico = document.getElementById("servico").value;
   const dataBase = document.getElementById("data").value;
-  const hora = document.getElementById("horarios").value;
+  const hora = document.getElementById("horaSelecionada").value;
 
+if (!hora) {
+  alert("Selecione um horário!");
+  return;
+}
 const data = `${dataBase}T${hora}`;
 
   try {
@@ -42,30 +46,24 @@ const data = `${dataBase}T${hora}`;
   }
 });
 
-function gerarHorarios() {
-  const horarios = [];
+async function carregarHorarios() {
+  const dataInput = document.getElementById("data").value;
+  const container = document.getElementById("horarios");
+
+  if (!dataInput) return;
+
+  container.innerHTML = "";
+
   const abertura = 9;
   const fechamento = 18;
+
+  const horarios = [];
 
   for (let h = abertura; h < fechamento; h++) {
     horarios.push(`${h.toString().padStart(2, "0")}:00`);
     horarios.push(`${h.toString().padStart(2, "0")}:30`);
   }
 
-  return horarios;
-}
-
-async function carregarHorarios() {
-  const dataInput = document.getElementById("data").value;
-  const select = document.getElementById("horarios");
-
-  if (!dataInput) return;
-
-  select.innerHTML = "";
-
-  const todosHorarios = gerarHorarios();
-
-  // busca agendamentos do dia
   const snapshot = await db.collection("agendamentos").get();
 
   const ocupados = [];
@@ -79,15 +77,23 @@ async function carregarHorarios() {
     }
   });
 
-  const livres = todosHorarios.filter(h => !ocupados.includes(h));
+  horarios.forEach(h => {
+    const btn = document.createElement("div");
+    btn.textContent = h;
+    btn.classList.add("horario-btn");
 
-  livres.forEach(h => {
-    const option = document.createElement("option");
-    option.value = h;
-    option.textContent = h;
-    select.appendChild(option);
+    if (ocupados.includes(h)) {
+      btn.classList.add("ocupado");
+    } else {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".horario-btn")
+          .forEach(b => b.classList.remove("selected"));
+
+        btn.classList.add("selected");
+        document.getElementById("horaSelecionada").value = h;
+      });
+    }
+
+    container.appendChild(btn);
   });
 }
-
-document.getElementById("data")
-.addEventListener("change", carregarHorarios);
