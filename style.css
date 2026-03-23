@@ -18,7 +18,7 @@ body {
   width: 120px;
   display: block;
   margin: 0 auto 15px;
-  filter: drop-shadow(0 0 10px rgba(212,175,55,0.5));
+  filter: drop-shadow(0 0 30px rgba(212,175,55,0.5));
 }
 
 h1 {
