@@ -40,6 +40,7 @@ const data = `${dataBase}T${hora}`;
     });
 
     alert("Agendamento realizado!");
+carregarHorarios();
   } catch (erro) {
     console.error(erro);
     alert("Erro ao salvar.");
@@ -47,6 +48,7 @@ const data = `${dataBase}T${hora}`;
 });
 
 async function carregarHorarios() {
+  document.getElementById("horaSelecionada").value = "";
   const dataInput = document.getElementById("data").value;
   const container = document.getElementById("horarios");
 
