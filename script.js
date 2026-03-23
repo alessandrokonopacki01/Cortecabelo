@@ -99,3 +99,6 @@ async function carregarHorarios() {
     container.appendChild(btn);
   });
 }
+
+document.getElementById("data")
+  .addEventListener("change", carregarHorarios);
