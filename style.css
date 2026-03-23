@@ -21,16 +21,18 @@ h1 {
 
 input, select, button {
   width: 100%;
-  margin: 10px 0;
-  padding: 12px;
+  margin: 12px 0;
+  padding: 14px;
   border-radius: 8px;
   border: none;
   font-size: 14px;
+  box-sizing: border-box; /* 🔥 ESSENCIAL */
 }
 
 input, select {
   background: #2a2a2a;
   color: white;
+  height: 48px;
 }
 
 button {
@@ -43,4 +45,10 @@ button {
 
 button:hover {
   background: #b8962e;
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
