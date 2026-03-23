@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Agendamento Barbearia</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>Agendar Corte</h1>
+
+<form id="formAgendamento">
+  <input type="text" id="nome" placeholder="Seu nome" required>
+  <input type="text" id="whatsapp" placeholder="WhatsApp" required>
+
+  <select id="servico">
+    <option value="Corte">Corte</option>
+    <option value="Corte + Barba">Corte + Barba</option>
+    <option value="Corte + Barba">Corte + Barba + Sobramcelha</option>
+  </select>
+
+  <input type="datetime-local" id="data" required>
+
+  <button type="submit">Agendar</button>
+</form>
+
+<script src="script.js"></script>
+</body>
+</html>
