@@ -21,7 +21,10 @@ document.getElementById("formAgendamento")
   const nome = document.getElementById("nome").value;
   const whatsapp = document.getElementById("whatsapp").value;
   const servico = document.getElementById("servico").value;
-  const data = document.getElementById("data").value;
+  const dataBase = document.getElementById("data").value;
+  const hora = document.getElementById("horarios").value;
+
+const data = `${dataBase}T${hora}`;
 
   try {
     await db.collection("agendamentos").add({
@@ -38,3 +41,53 @@ document.getElementById("formAgendamento")
     alert("Erro ao salvar.");
   }
 });
+
+function gerarHorarios() {
+  const horarios = [];
+  const abertura = 9;
+  const fechamento = 18;
+
+  for (let h = abertura; h < fechamento; h++) {
+    horarios.push(`${h.toString().padStart(2, "0")}:00`);
+    horarios.push(`${h.toString().padStart(2, "0")}:30`);
+  }
+
+  return horarios;
+}
+
+async function carregarHorarios() {
+  const dataInput = document.getElementById("data").value;
+  const select = document.getElementById("horarios");
+
+  if (!dataInput) return;
+
+  select.innerHTML = "";
+
+  const todosHorarios = gerarHorarios();
+
+  // busca agendamentos do dia
+  const snapshot = await db.collection("agendamentos").get();
+
+  const ocupados = [];
+
+  snapshot.forEach(doc => {
+    const ag = doc.data();
+
+    if (ag.data.startsWith(dataInput)) {
+      const hora = ag.data.split("T")[1].substring(0,5);
+      ocupados.push(hora);
+    }
+  });
+
+  const livres = todosHorarios.filter(h => !ocupados.includes(h));
+
+  livres.forEach(h => {
+    const option = document.createElement("option");
+    option.value = h;
+    option.textContent = h;
+    select.appendChild(option);
+  });
+}
+
+document.getElementById("data")
+.addEventListener("change", carregarHorarios);

@@ -1,32 +1,36 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
-  <meta charset="UTF-8">
-  <title>Agendamento Barbearia</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>Agendamento Barbearia</title>
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<h1>Agendar Corte</h1>
+    <h1>Agendar Corte</h1>
 
-<form id="formAgendamento">
-  <input type="text" id="nome" placeholder="Seu nome" required>
-  <input type="text" id="whatsapp" placeholder="WhatsApp" required>
+    <form id="formAgendamento">
+        <input type="text" id="nome" placeholder="Seu nome" required>
+        <input type="text" id="whatsapp" placeholder="WhatsApp" required>
 
-  <select id="servico">
-    <option value="Corte">Corte</option>
-    <option value="Corte + Barba">Corte + Barba</option>
-    <option value="Corte + Barba">Corte + Barba + Sobramcelha</option>
-  </select>
+        <select id="servico">
+            <option value="Corte">Corte</option>
+            <option value="Corte + Barba">Corte + Barba</option>
+            <option value="Corte + Barba">Corte + Barba + Sobramcelha</option>
+        </select>
 
-  <input type="datetime-local" id="data" required>
+        <input type="date" id="data" required>
+        <select id="horarios"></select>
 
-  <button type="submit">Agendar</button>
-</form>
+        <button type="submit">Agendar</button>
+    </form>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-<script src="script.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="script.js"></script>
 
 </body>
+
 </html>
