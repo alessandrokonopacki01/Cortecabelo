@@ -17,89 +17,55 @@ const db = firebase.firestore();
 // 1. CLIENTE: AGENDAMENTO (index.html)
 // ==========================================
 
-async function carregarHorarios() {
-    const dataElement = document.getElementById("data");
-    const barbeiroElement = document.getElementById("barbeiro");
-    const container = document.getElementById("horarios");
-    const horaSelectInput = document.getElementById("horaSelecionada");
+async function carregarAgendaDoDia() {
+    const container = document.getElementById("listaAgendamentos");
+    if (!container) return;
 
-    if (!dataElement || !barbeiroElement || !container) return;
-
-    const dataInput = dataElement.value;
-    const barbeiroSelecionado = barbeiroElement.value;
-
-    container.innerHTML = "";
-    if (horaSelectInput) horaSelectInput.value = "";
-
-    // Se não selecionou data ou barbeiro, avisa o usuário
-    if (!dataInput || !barbeiroSelecionado) {
-        container.innerHTML = "<p style='font-size:12px; color:#888;'>Escolha o barbeiro e a data para ver horários.</p>";
+    const barbeiroNome = localStorage.getItem("barbeiroLogado");
+    if (!barbeiroNome) {
+        window.location.href = "login.html";
         return;
     }
 
-    // --- LÓGICA PARA FILTRAR HORAS QUE JÁ PASSARAM ---
-    const agora = new Date();
-    // Ajusta a data de hoje para o formato YYYY-MM-DD para comparar com o input
-    const hojeData = agora.getFullYear() + "-" + 
-                     String(agora.getMonth() + 1).padStart(2, '0') + "-" + 
-                     String(agora.getDate()).padStart(2, '0');
-    
-    const horaAtual = agora.getHours();
-    const minutoAtual = agora.getMinutes();
+    const dataFiltro = document.getElementById("dataFiltro").value;
+    const diaBusca = dataFiltro || new Date().toISOString().split("T")[0];
 
-    const horariosOpcoes = [];
-    for (let h = 9; h < 18; h++) {
-        horariosOpcoes.push(`${h.toString().padStart(2, "0")}:00`);
-        horariosOpcoes.push(`${h.toString().padStart(2, "0")}:30`);
-    }
+    const snapshot = await db.collection("agendamentos")
+        .where("barbeiro", "==", barbeiroNome)
+        .get();
 
-    try {
-        const snapshot = await db.collection("agendamentos")
-            .where("barbeiro", "==", barbeiroSelecionado)
-            .get();
+    container.innerHTML = `<h2>Agenda: ${barbeiroNome}</h2>`;
+    let encontrou = false;
+    let agendamentosFiltrados = [];
 
-        const ocupados = [];
-        snapshot.forEach(doc => {
-            const ag = doc.data();
-            if (ag.data.startsWith(dataInput) && ag.status !== "cancelado") {
-                const hora = ag.data.split("T")[1].substring(0, 5);
-                ocupados.push(hora);
-            }
-        });
-
-        horariosOpcoes.forEach(h => {
-            const [horaOpcao, minutoOpcao] = h.split(":").map(Number);
-            
-            // Se a data selecionada for HOJE, verifica se o horário já passou
-            if (dataInput === hojeData) {
-                if (horaOpcao < horaAtual || (horaOpcao === horaAtual && minutoOpcao <= minutoAtual)) {
-                    return; // "return" aqui dentro do forEach pula para o próximo horário (não cria a caixinha)
-                }
-            }
-
-            const btn = document.createElement("div");
-            btn.textContent = h;
-            btn.classList.add("horario-btn");
-
-            if (ocupados.includes(h)) {
-                btn.classList.add("ocupado");
-            } else {
-                btn.addEventListener("click", () => {
-                    document.querySelectorAll(".horario-btn").forEach(b => b.classList.remove("selected"));
-                    btn.classList.add("selected");
-                    if (horaSelectInput) horaSelectInput.value = h;
-                });
-            }
-            container.appendChild(btn);
-        });
-
-        // Caso todos os horários de hoje já tenham passado
-        if (container.innerHTML === "" && dataInput === hojeData) {
-            container.innerHTML = "<p style='font-size:12px; color:#ff4444;'>Não há mais horários disponíveis para hoje.</p>";
+    snapshot.forEach(doc => {
+        const ag = doc.data();
+        
+        // FILTRO: Só entra na lista se for o dia certo E NÃO for cancelado E NÃO for concluído
+        if (ag.data.startsWith(diaBusca) && ag.status !== "cancelado" && ag.status !== "concluido") {
+            agendamentosFiltrados.push({ id: doc.id, ...ag });
+            encontrou = true;
         }
+    });
 
-    } catch (e) { 
-        console.error("Erro ao carregar horários:", e); 
+    // Ordenar por horário (do mais cedo para o mais tarde)
+    agendamentosFiltrados.sort((a, b) => a.data.localeCompare(b.data));
+
+    agendamentosFiltrados.forEach(ag => {
+        const hora = ag.data.split("T")[1].substring(0, 5);
+        const div = document.createElement("div");
+        div.classList.add("card");
+        div.innerHTML = `
+            <strong>${hora} - ${ag.nome}</strong><br>
+            ${ag.servico} | WhatsApp: ${ag.whatsapp}<br><br>
+            <button onclick="mudarStatus('${ag.id}', 'concluido')" style="width:45%; display:inline-block;">✔️ Concluir</button>
+            <button onclick="mudarStatus('${ag.id}', 'cancelado')" style="width:45%; display:inline-block; background:#ff4444; color:white;">❌ Cancelar</button>
+        `;
+        container.appendChild(div);
+    });
+
+    if (!encontrou) {
+        container.innerHTML += "<p>Nenhum agendamento pendente para este dia.</p>";
     }
 }
 
