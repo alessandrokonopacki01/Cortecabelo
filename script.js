@@ -25,7 +25,7 @@ async function carregarHorarios() {
     snapshot.forEach(doc => {
     const ag = doc.data();
     // Filtra por data e status (pendente)
-    if (ag.data.startsWith(dataFiltro) && ag.status !== "cancelado" && ag.status !== "concluido") {
+    if (ag.data.startsWith(dataInput) && ag.status !== "cancelado" && ag.status !== "concluido") {
         const div = document.createElement("div");
         div.className = "card";
         
