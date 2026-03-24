@@ -106,7 +106,8 @@ async function carregarHorarios() {
     container.appendChild(btn);
   });
 }
-
+// Atualiza horários quando o barbeiro for trocado 
+document.getElementById("barbeiro").addEventListener("change", carregarHorarios);
 // --- PAINEL DO BARBEIRO (barbeiros.html) ---
 async function carregarAgendaDoDia() {
     const container = document.getElementById("listaAgendamentos");
