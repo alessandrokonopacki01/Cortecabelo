@@ -167,8 +167,40 @@ async function excluirBarbeiro(id) {
 }
 
 // Inicialização
-carregarBarbeiros();
+window.onload = () => {
+    document.getElementById("data").min = new Date().toISOString().split("T")[0];
+    carregarBarbeiros();
+};
+
+// --- FUNÇÃO DE SALVAR AGENDAMENTO (Faltava no seu código) ---
 if (document.getElementById("formAgendamento")) {
-    document.getElementById("data").addEventListener("change", carregarHorarios);
-    document.getElementById("barbeiro").addEventListener("change", carregarHorarios);
+    document.getElementById("formAgendamento").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const nome = document.getElementById("nome").value;
+        const whatsapp = document.getElementById("whatsapp").value;
+        const barbeiro = document.getElementById("barbeiro").value;
+        const servico = document.getElementById("servico").value;
+        const data = document.getElementById("data").value;
+        const hora = document.getElementById("horaSelecionada").value;
+
+        if (!hora) return alert("Selecione um horário!");
+
+        try {
+            await db.collection("agendamentos").add({
+                nome,
+                whatsapp,
+                barbeiro,
+                servico,
+                data: `${data}T${hora}`, // Salva no formato ISO simples para o filtro funcionar
+                status: "pendente"
+            });
+
+            alert("Agendamento realizado com sucesso!");
+            location.reload();
+        } catch (error) {
+            console.error("Erro ao agendar:", error);
+            alert("Erro ao salvar agendamento.");
+        }
+    });
 }
