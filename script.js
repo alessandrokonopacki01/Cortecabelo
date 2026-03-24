@@ -31,11 +31,21 @@ async function carregarHorarios() {
     container.innerHTML = "";
     if (horaSelectInput) horaSelectInput.value = "";
 
-    // Só mostra horários se houver data E barbeiro selecionado
+    // Se não selecionou data ou barbeiro, avisa o usuário
     if (!dataInput || !barbeiroSelecionado) {
         container.innerHTML = "<p style='font-size:12px; color:#888;'>Escolha o barbeiro e a data para ver horários.</p>";
         return;
     }
+
+    // --- LÓGICA PARA FILTRAR HORAS QUE JÁ PASSARAM ---
+    const agora = new Date();
+    // Ajusta a data de hoje para o formato YYYY-MM-DD para comparar com o input
+    const hojeData = agora.getFullYear() + "-" + 
+                     String(agora.getMonth() + 1).padStart(2, '0') + "-" + 
+                     String(agora.getDate()).padStart(2, '0');
+    
+    const horaAtual = agora.getHours();
+    const minutoAtual = agora.getMinutes();
 
     const horariosOpcoes = [];
     for (let h = 9; h < 18; h++) {
@@ -44,7 +54,6 @@ async function carregarHorarios() {
     }
 
     try {
-        // Busca apenas agendamentos do barbeiro escolhido para não bloquear os outros
         const snapshot = await db.collection("agendamentos")
             .where("barbeiro", "==", barbeiroSelecionado)
             .get();
@@ -59,6 +68,15 @@ async function carregarHorarios() {
         });
 
         horariosOpcoes.forEach(h => {
+            const [horaOpcao, minutoOpcao] = h.split(":").map(Number);
+            
+            // Se a data selecionada for HOJE, verifica se o horário já passou
+            if (dataInput === hojeData) {
+                if (horaOpcao < horaAtual || (horaOpcao === horaAtual && minutoOpcao <= minutoAtual)) {
+                    return; // "return" aqui dentro do forEach pula para o próximo horário (não cria a caixinha)
+                }
+            }
+
             const btn = document.createElement("div");
             btn.textContent = h;
             btn.classList.add("horario-btn");
@@ -74,7 +92,15 @@ async function carregarHorarios() {
             }
             container.appendChild(btn);
         });
-    } catch (e) { console.error("Erro horários:", e); }
+
+        // Caso todos os horários de hoje já tenham passado
+        if (container.innerHTML === "" && dataInput === hojeData) {
+            container.innerHTML = "<p style='font-size:12px; color:#ff4444;'>Não há mais horários disponíveis para hoje.</p>";
+        }
+
+    } catch (e) { 
+        console.error("Erro ao carregar horários:", e); 
+    }
 }
 
 // Eventos da página inicial
