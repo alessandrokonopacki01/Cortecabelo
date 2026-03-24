@@ -53,55 +53,58 @@ if (formAgendamento) {
 }
 
 async function carregarHorarios() {
-    const dataInput = document.getElementById("data")?.value;
-    const container = document.getElementById("horarios");
-    const horaSelectInput = document.getElementById("horaSelecionada");
+  const dataInput = document.getElementById("data").value;
+  const barbeiroSelecionado = document.getElementById("barbeiro").value; // Captura o barbeiro 
+  const container = document.getElementById("horarios");
+  const horaSelectInput = document.getElementById("horaSelecionada");
 
-    if (!dataInput || !container) return;
+  if (!dataInput || !barbeiroSelecionado) return; // Só carrega se ambos estiverem preenchidos
 
-    container.innerHTML = "";
-    horaSelectInput.value = "";
+  container.innerHTML = "";
+  horaSelectInput.value = "";
 
-    const abertura = 9;
-    const fechamento = 18;
-    const horarios = [];
+  const abertura = 9;
+  const fechamento = 18;
+  const horarios = [];
 
-    for (let h = abertura; h < fechamento; h++) {
-        horarios.push(`${h.toString().padStart(2, "0")}:00`);
-        horarios.push(`${h.toString().padStart(2, "0")}:30`);
+  for (let h = abertura; h < fechamento; h++) {
+    horarios.push(`${h.toString().padStart(2, "0")}:00`);
+    horarios.push(`${h.toString().padStart(2, "0")}:30`);
+  }
+
+  // CORREÇÃO: Filtra no Firebase apenas os agendamentos do barbeiro escolhido
+  const snapshot = await db.collection("agendamentos")
+    .where("barbeiro", "==", barbeiroSelecionado)
+    .get();
+
+  const ocupados = [];
+
+  snapshot.forEach(doc => {
+    const ag = doc.data();
+    // Verifica se é o mesmo dia e se não está cancelado
+    if (ag.data.startsWith(dataInput) && ag.status !== "cancelado") {
+      const hora = ag.data.split("T")[1].substring(0, 5);
+      ocupados.push(hora);
     }
+  });
 
-    const snapshot = await db.collection("agendamentos").get();
-    const ocupados = [];
+  horarios.forEach(h => {
+    const btn = document.createElement("div");
+    btn.textContent = h;
+    btn.classList.add("horario-btn");
 
-    snapshot.forEach(doc => {
-        const ag = doc.data();
-        if (ag.data.startsWith(dataInput) && ag.status !== "cancelado") {
-            const hora = ag.data.split("T")[1].substring(0, 5);
-            ocupados.push(hora);
-        }
-    });
-
-    horarios.forEach(h => {
-        const btn = document.createElement("div");
-        btn.textContent = h;
-        btn.classList.add("horario-btn");
-
-        if (ocupados.includes(h)) {
-            btn.classList.add("ocupado");
-        } else {
-            btn.addEventListener("click", () => {
-                document.querySelectorAll(".horario-btn").forEach(b => b.classList.remove("selected"));
-                btn.classList.add("selected");
-                horaSelectInput.value = h;
-            });
-        }
-        container.appendChild(btn);
-    });
-}
-
-if (document.getElementById("data")) {
-    document.getElementById("data").addEventListener("change", carregarHorarios);
+    if (ocupados.includes(h)) {
+      btn.classList.add("ocupado");
+    } else {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".horario-btn")
+          .forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        horaSelectInput.value = h;
+      });
+    }
+    container.appendChild(btn);
+  });
 }
 
 // --- PAINEL DO BARBEIRO (barbeiros.html) ---
