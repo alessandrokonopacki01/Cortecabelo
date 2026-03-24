@@ -168,8 +168,22 @@ async function excluirBarbeiro(id) {
 
 // Inicialização
 window.onload = () => {
-    document.getElementById("data").min = new Date().toISOString().split("T")[0];
-    carregarBarbeiros();
+    carregarBarbeiros(); // Garante que a lista de barbeiros apareça
+    
+    const campoData = document.getElementById("data");
+    const campoBarbeiro = document.getElementById("barbeiro");
+
+    // Bloqueia datas passadas no calendário
+    if (campoData) {
+        campoData.min = new Date().toISOString().split("T")[0];
+        
+        // Adiciona os eventos para carregar horários quando mudar a data ou barbeiro
+        campoData.addEventListener("change", carregarHorarios);
+    }
+    
+    if (campoBarbeiro) {
+        campoBarbeiro.addEventListener("change", carregarHorarios);
+    }
 };
 
 // --- FUNÇÃO DE SALVAR AGENDAMENTO (Faltava no seu código) ---
