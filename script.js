@@ -18,8 +18,9 @@ async function carregarHorarios() {
     if (!dataInput || !barbeiroSel || !container) return;
 
     container.innerHTML = "Carregando...";
-    const snapshot = await db.collection("agendamentos").where("barbeiro", "==", barbeiroSel).get();
     
+    // Busca agendamentos existentes para marcar como ocupado
+    const snapshot = await db.collection("agendamentos").where("barbeiro", "==", barbeiroSel).get();
     const ocupados = [];
     snapshot.forEach(doc => {
         const ag = doc.data();
@@ -28,48 +29,53 @@ async function carregarHorarios() {
         }
     });
 
-    container.innerHTML = ""; // Limpa o "Carregando..." para desenhar os botões
+    container.innerHTML = ""; // Limpa o texto "Carregando..."
 
-    // --- INÍCIO DA LÓGICA DE HORAS PASSADAS ---
+    // --- BLOQUEIO DE HORÁRIOS PASSADOS ---
     const agora = new Date();
+    // Formata a data de hoje para comparação (Ano-Mês-Dia)
     const hojeData = agora.getFullYear() + "-" + 
                      String(agora.getMonth() + 1).padStart(2, '0') + "-" + 
                      String(agora.getDate()).padStart(2, '0');
+    
     const horaAtual = agora.getHours();
     const minutoAtual = agora.getMinutes();
-    // --- FIM DA LÓGICA DE HORAS PASSADAS ---
 
     for (let h = 9; h < 18; h++) {
         ["00", "30"].forEach(m => {
-            const hora = `${h.toString().padStart(2, "0")}:${m}`;
-
-            // VERIFICAÇÃO: Se for hoje, pula os horários que já passaram
+            const horaOpcao = `${h.toString().padStart(2, "0")}:${m}`;
+            
+            // Se o dia selecionado for HOJE, verifica se o horário já passou
             if (dataInput === hojeData) {
                 const hNum = parseInt(h);
                 const mNum = parseInt(m);
+                // Se a hora for menor que a atual, ou se for a mesma hora mas o minuto já passou, IGNORE
                 if (hNum < horaAtual || (hNum === horaAtual && mNum <= minutoAtual)) {
-                    return; // Pula a criação desta caixinha específica
+                    return; // Este 'return' faz o código pular para a próxima opção sem criar o botão
                 }
             }
 
             const btn = document.createElement("div");
-            btn.textContent = hora;
-            btn.className = "horario-btn" + (ocupados.includes(hora) ? " ocupado" : "");
+            btn.textContent = horaOpcao;
             
-            if (!ocupados.includes(hora)) {
+            // Verifica se está ocupado no Firebase
+            if (ocupados.includes(horaOpcao)) {
+                btn.className = "horario-btn ocupado";
+            } else {
+                btn.className = "horario-btn";
                 btn.onclick = () => {
                     document.querySelectorAll(".horario-btn").forEach(b => b.classList.remove("selected"));
                     btn.classList.add("selected");
-                    document.getElementById("horaSelecionada").value = hora;
+                    document.getElementById("horaSelecionada").value = horaOpcao;
                 };
             }
             container.appendChild(btn);
         });
     }
 
-    // Se após filtrar tudo o container continuar vazio (ex: fim do expediente)
+    // Mensagem de feedback caso não sobre nenhum horário para hoje
     if (container.innerHTML === "" && dataInput === hojeData) {
-        container.innerHTML = "<p style='color:gray; font-size:13px;'>Não há mais horários para hoje.</p>";
+        container.innerHTML = "<p style='color:#888; font-size:13px;'>Expediente encerrado por hoje.</p>";
     }
 }
 
