@@ -233,6 +233,67 @@ async function carregarBarbeirosParaExclusao() {
 // Chame a função ao carregar a página
 carregarBarbeirosParaExclusao();
 
+// Função para validar o login do barbeiro
+async function fazerLogin() {
+    const loginInput = document.getElementById("userLogin").value;
+    const senhaInput = document.getElementById("userSenha").value;
+
+    const snapshot = await db.collection("barbeiros")
+        .where("login", "==", loginInput)
+        .where("senha", "==", senhaInput)
+        .get();
+
+    if (!snapshot.empty) {
+        const dadosBarbeiro = snapshot.docs[0].data();
+        // Salva o nome do barbeiro para filtrar a agenda depois
+        localStorage.setItem("barbeiroLogado", dadosBarbeiro.nome);
+        window.location.href = "barbeiros.html";
+    } else {
+        alert("Login ou senha incorretos!");
+    }
+}
+
+// Alterar a função carregarAgendaDoDia para filtrar pelo barbeiro logado
+async function carregarAgendaDoDia() {
+    const container = document.getElementById("listaAgendamentos");
+    if (!container) return;
+
+    const barbeiroNome = localStorage.getItem("barbeiroLogado");
+    if (!barbeiroNome) {
+        window.location.href = "login.html"; // Se não logou, volta pro login
+        return;
+    }
+
+    const dataFiltro = document.getElementById("dataFiltro").value;
+    const hoje = dataFiltro || new Date().toISOString().split("T")[0];
+
+    // FILTRO: Busca apenas agendamentos deste barbeiro específico
+    const snapshot = await db.collection("agendamentos")
+        .where("barbeiro", "==", barbeiroNome) 
+        .get();
+
+    container.innerHTML = `<h3>Agenda de: ${barbeiroNome}</h3>`;
+    
+    let encontrou = false;
+    snapshot.forEach(doc => {
+        const ag = doc.data();
+        if (ag.data.startsWith(hoje)) {
+            encontrou = true;
+            const hora = ag.data.split("T")[1].substring(0, 5);
+            const div = document.createElement("div");
+            div.classList.add("card");
+            div.innerHTML = `
+                <strong>${hora} - ${ag.nome}</strong><br>
+                Serviço: ${ag.servico}<br>
+                <button onclick="concluir('${doc.id}')">✔️</button>
+                <button onclick="cancelar('${doc.id}')" style="background:#ff4444;">❌</button>
+            `;
+            container.appendChild(div);
+        }
+    });
+
+    if (!encontrou) container.innerHTML += "<p>Sem horários para hoje.</p>";
+}
 // Inicialização automática
 carregarBarbeiros();
 if (window.location.pathname.includes("barbeiros.html")) {
