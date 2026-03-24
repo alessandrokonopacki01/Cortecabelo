@@ -208,6 +208,31 @@ async function excluirBarbeiro(id) {
   }
 }
 
+async function carregarBarbeirosParaExclusao() {
+  const container = document.getElementById("listaBarbeirosAdmin");
+  if (!container) return;
+
+  const snapshot = await db.collection("barbeiros").get();
+  container.innerHTML = "";
+
+  snapshot.forEach(doc => {
+    const b = doc.data();
+    const div = document.createElement("div");
+    div.classList.add("card"); // Aproveitando o estilo que você já tem 
+    
+    div.innerHTML = `
+      <strong>${b.nome}</strong> (Login: ${b.login})<br><br>
+      <button onclick="excluirBarbeiro('${doc.id}')" style="background: #ff4444; color: white;">
+        🗑️ Excluir Barbeiro
+      </button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+// Chame a função ao carregar a página
+carregarBarbeirosParaExclusao();
+
 // Inicialização automática
 carregarBarbeiros();
 if (window.location.pathname.includes("barbeiros.html")) {
