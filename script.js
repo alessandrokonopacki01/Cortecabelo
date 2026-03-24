@@ -120,9 +120,22 @@ async function carregarAgendaDoDia() {
         if (ag.data.startsWith(dataFiltro) && ag.status !== "cancelado" && ag.status !== "concluido") {
             const div = document.createElement("div");
             div.className = "card";
-            div.innerHTML = `<strong>${ag.data.split("T")[1]} - ${ag.nome}</strong><br>
-                <button onclick="mudarStatus('${doc.id}', 'concluido')">✔️</button>
-                <button onclick="mudarStatus('${doc.id}', 'cancelado')" style="background:red">❌</button>`;
+            const hora = ag.data.split("T")[1];
+
+div.innerHTML = `
+    <strong>${hora} - ${ag.nome}</strong><br>
+    <small>Serviço: ${ag.servico || 'Não informado'}</small><br>
+    <small>WhatsApp: 
+        <a href="https://wa.me/55${ag.whatsapp}" target="_blank" style="color:#d4af37;">
+            ${ag.whatsapp}
+        </a>
+    </small><br>
+
+    <div style="margin-top: 10px;">
+        <button onclick="mudarStatus('${doc.id}', 'concluido')">✔️ Concluir</button>
+        <button onclick="mudarStatus('${doc.id}', 'cancelado')" style="background:red">❌ Cancelar</button>
+    </div>
+`;
             container.appendChild(div);
         }
     });
