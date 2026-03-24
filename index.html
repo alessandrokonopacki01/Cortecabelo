@@ -22,10 +22,10 @@
                 <option value="Corte + Barba">Corte + Barba + Sobramcelha</option>
             </select>
 
-            <input type="date" id="data" required>
+           <input type="date" id="data" required min="${new Date().toISOString().split('T')[0]}">
             <div id="horarios" class="horarios-grid"></div>
             <input type="hidden" id="horaSelecionada">
-            <input type="date" id="data" required min="${new Date().toISOString().split('T')[0]}">
+            
 
             <button type="submit">Agendar</button>
         </form>
