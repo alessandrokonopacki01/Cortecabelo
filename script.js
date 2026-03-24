@@ -195,6 +195,19 @@ async function cadastrarBarbeiro() {
     }
 }
 
+async function excluirBarbeiro(id) {
+  if (confirm("Tem certeza que deseja remover este barbeiro?")) {
+    try {
+      await db.collection("barbeiros").doc(id).delete();
+      alert("Barbeiro removido com sucesso!");
+      location.reload(); // Recarrega a página para atualizar a lista
+    } catch (erro) {
+      console.error("Erro ao excluir:", erro);
+      alert("Erro ao excluir barbeiro.");
+    }
+  }
+}
+
 // Inicialização automática
 carregarBarbeiros();
 if (window.location.pathname.includes("barbeiros.html")) {
