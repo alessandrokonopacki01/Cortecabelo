@@ -182,25 +182,7 @@ async function excluirBarbeiro(id) {
     if (confirm("Excluir?")) { await db.collection("barbeiros").doc(id).delete(); location.reload(); }
 }
 
-// Inicialização
-window.onload = () => {
-    carregarBarbeiros(); // Garante que a lista de barbeiros apareça
-    
-    const campoData = document.getElementById("data");
-    const campoBarbeiro = document.getElementById("barbeiro");
 
-    // Bloqueia datas passadas no calendário
-    if (campoData) {
-        campoData.min = new Date().toISOString().split("T")[0];
-        
-        // Adiciona os eventos para carregar horários quando mudar a data ou barbeiro
-        campoData.addEventListener("change", carregarHorarios);
-    }
-    
-    if (campoBarbeiro) {
-        campoBarbeiro.addEventListener("change", carregarHorarios);
-    }
-};
 
 // --- FUNÇÃO DE SALVAR AGENDAMENTO (Faltava no seu código) ---
 if (document.getElementById("formAgendamento")) {
@@ -234,3 +216,22 @@ if (document.getElementById("formAgendamento")) {
         }
     });
 }
+// Inicialização
+window.onload = () => {
+    carregarBarbeiros(); // Garante que a lista de barbeiros apareça
+    
+    const campoData = document.getElementById("data");
+    const campoBarbeiro = document.getElementById("barbeiro");
+
+    // Bloqueia datas passadas no calendário
+    if (campoData) {
+        campoData.min = new Date().toISOString().split("T")[0];
+        
+        // Adiciona os eventos para carregar horários quando mudar a data ou barbeiro
+        campoData.addEventListener("change", carregarHorarios);
+    }
+    
+    if (campoBarbeiro) {
+        campoBarbeiro.addEventListener("change", carregarHorarios);
+    }
+};
