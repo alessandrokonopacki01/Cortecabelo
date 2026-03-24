@@ -13,12 +13,77 @@ if (!firebase.apps.length) {
 }
 const db = firebase.firestore();
 
-// --- FORMULÁRIO DE AGENDAMENTO (index.html) ---
-const formAgendamento = document.getElementById("formAgendamento");
-if (formAgendamento) {
-    formAgendamento.addEventListener("submit", async (e) => {
-        e.preventDefault();
+// ==========================================
+// 1. CLIENTE: AGENDAMENTO (index.html)
+// ==========================================
 
+async function carregarHorarios() {
+    const dataElement = document.getElementById("data");
+    const barbeiroElement = document.getElementById("barbeiro");
+    const container = document.getElementById("horarios");
+    const horaSelectInput = document.getElementById("horaSelecionada");
+
+    if (!dataElement || !barbeiroElement || !container) return;
+
+    const dataInput = dataElement.value;
+    const barbeiroSelecionado = barbeiroElement.value;
+
+    container.innerHTML = "";
+    if (horaSelectInput) horaSelectInput.value = "";
+
+    // Só mostra horários se houver data E barbeiro selecionado
+    if (!dataInput || !barbeiroSelecionado) {
+        container.innerHTML = "<p style='font-size:12px; color:#888;'>Escolha o barbeiro e a data para ver horários.</p>";
+        return;
+    }
+
+    const horariosOpcoes = [];
+    for (let h = 9; h < 18; h++) {
+        horariosOpcoes.push(`${h.toString().padStart(2, "0")}:00`);
+        horariosOpcoes.push(`${h.toString().padStart(2, "0")}:30`);
+    }
+
+    try {
+        // Busca apenas agendamentos do barbeiro escolhido para não bloquear os outros
+        const snapshot = await db.collection("agendamentos")
+            .where("barbeiro", "==", barbeiroSelecionado)
+            .get();
+
+        const ocupados = [];
+        snapshot.forEach(doc => {
+            const ag = doc.data();
+            if (ag.data.startsWith(dataInput) && ag.status !== "cancelado") {
+                const hora = ag.data.split("T")[1].substring(0, 5);
+                ocupados.push(hora);
+            }
+        });
+
+        horariosOpcoes.forEach(h => {
+            const btn = document.createElement("div");
+            btn.textContent = h;
+            btn.classList.add("horario-btn");
+
+            if (ocupados.includes(h)) {
+                btn.classList.add("ocupado");
+            } else {
+                btn.addEventListener("click", () => {
+                    document.querySelectorAll(".horario-btn").forEach(b => b.classList.remove("selected"));
+                    btn.classList.add("selected");
+                    if (horaSelectInput) horaSelectInput.value = h;
+                });
+            }
+            container.appendChild(btn);
+        });
+    } catch (e) { console.error("Erro horários:", e); }
+}
+
+// Eventos da página inicial
+if (document.getElementById("formAgendamento")) {
+    document.getElementById("data").addEventListener("change", carregarHorarios);
+    document.getElementById("barbeiro").addEventListener("change", carregarHorarios);
+
+    document.getElementById("formAgendamento").addEventListener("submit", async (e) => {
+        e.preventDefault();
         const nome = document.getElementById("nome").value;
         const whatsapp = document.getElementById("whatsapp").value;
         const barbeiro = document.getElementById("barbeiro").value;
@@ -26,89 +91,25 @@ if (formAgendamento) {
         const dataBase = document.getElementById("data").value;
         const hora = document.getElementById("horaSelecionada").value;
 
-        if (!hora) {
-            alert("Selecione um horário!");
-            return;
-        }
-        const data = `${dataBase}T${hora}`;
+        if (!hora) return alert("Selecione um horário!");
 
         try {
             await db.collection("agendamentos").add({
-                nome,
-                whatsapp,
-                servico,
-                barbeiro,
-                data,
+                nome, whatsapp, servico, barbeiro,
+                data: `${dataBase}T${hora}`,
                 status: "pendente",
                 criadoEm: new Date()
             });
-
             alert("Agendamento realizado!");
             carregarHorarios();
-        } catch (erro) {
-            console.error(erro);
-            alert("Erro ao salvar.");
-        }
+        } catch (erro) { alert("Erro ao agendar."); }
     });
 }
 
-async function carregarHorarios() {
-    const dataInput = document.getElementById("data")?.value;
-    const barbeiroSelecionado = document.getElementById("barbeiro")?.value;
-    const container = document.getElementById("horarios");
-    const horaSelectInput = document.getElementById("horaSelecionada");
+// ==========================================
+// 2. BARBEIRO: LOGIN E AGENDA (barbeiros.html / login.html)
+// ==========================================
 
-    if (!dataInput || !barbeiroSelecionado || !container) return;
-
-    container.innerHTML = "";
-    horaSelectInput.value = "";
-
-    const abertura = 9;
-    const fechamento = 18;
-    const horarios = [];
-
-    for (let h = abertura; h < fechamento; h++) {
-        horarios.push(`${h.toString().padStart(2, "0")}:00`);
-        horarios.push(`${h.toString().padStart(2, "0")}:30`);
-    }
-
-    // Filtra agendamentos APENAS do barbeiro selecionado para liberar horários nos outros
-    const snapshot = await db.collection("agendamentos")
-        .where("barbeiro", "==", barbeiroSelecionado)
-        .get();
-
-    const ocupados = [];
-    snapshot.forEach(doc => {
-        const ag = doc.data();
-        if (ag.data.startsWith(dataInput) && ag.status !== "cancelado") {
-            const hora = ag.data.split("T")[1].substring(0, 5);
-            ocupados.push(hora);
-        }
-    });
-
-    horarios.forEach(h => {
-        const btn = document.createElement("div");
-        btn.textContent = h;
-        btn.classList.add("horario-btn");
-
-        if (ocupados.includes(h)) {
-            btn.classList.add("ocupado");
-        } else {
-            btn.addEventListener("click", () => {
-                document.querySelectorAll(".horario-btn").forEach(b => b.classList.remove("selected"));
-                btn.classList.add("selected");
-                horaSelectInput.value = h;
-            });
-        }
-        container.appendChild(btn);
-    });
-}
-
-// Ouvintes para atualizar horários
-if (document.getElementById("data")) document.getElementById("data").addEventListener("change", carregarHorarios);
-if (document.getElementById("barbeiro")) document.getElementById("barbeiro").addEventListener("change", carregarHorarios);
-
-// --- SISTEMA DE LOGIN (login.html) ---
 async function fazerLogin() {
     const loginInput = document.getElementById("userLogin").value;
     const senhaInput = document.getElementById("userSenha").value;
@@ -119,15 +120,13 @@ async function fazerLogin() {
         .get();
 
     if (!snapshot.empty) {
-        const dadosBarbeiro = snapshot.docs[0].data();
-        localStorage.setItem("barbeiroLogado", dadosBarbeiro.nome);
+        localStorage.setItem("barbeiroLogado", snapshot.docs[0].data().nome);
         window.location.href = "barbeiros.html";
     } else {
         alert("Login ou senha incorretos!");
     }
 }
 
-// --- PAINEL DO BARBEIRO (barbeiros.html) ---
 async function carregarAgendaDoDia() {
     const container = document.getElementById("listaAgendamentos");
     if (!container) return;
@@ -139,75 +138,65 @@ async function carregarAgendaDoDia() {
     }
 
     const dataFiltro = document.getElementById("dataFiltro").value;
-    const hoje = dataFiltro || new Date().toISOString().split("T")[0];
+    const diaBusca = dataFiltro || new Date().toISOString().split("T")[0];
 
     const snapshot = await db.collection("agendamentos")
-        .where("barbeiro", "==", barbeiroNome) 
+        .where("barbeiro", "==", barbeiroNome)
         .get();
 
-    container.innerHTML = `<h3>Agenda de: ${barbeiroNome}</h3>`;
-    
-    let listaAgendas = [];
+    container.innerHTML = `<h2>Agenda: ${barbeiroNome}</h2>`;
+    let encontrou = false;
+
     snapshot.forEach(doc => {
         const ag = doc.data();
-        if (ag.data.startsWith(hoje)) {
-            listaAgendas.push({ id: doc.id, ...ag });
+        if (ag.data.startsWith(diaBusca)) {
+            encontrou = true;
+            const hora = ag.data.split("T")[1].substring(0, 5);
+            const div = document.createElement("div");
+            div.classList.add("card");
+            div.innerHTML = `
+                <strong>${hora} - ${ag.nome}</strong><br>
+                ${ag.servico} | WhatsApp: ${ag.whatsapp}<br>
+                Status: ${ag.status}<br>
+                <button onclick="mudarStatus('${doc.id}', 'concluido')">✔️</button>
+                <button onclick="mudarStatus('${doc.id}', 'cancelado')" style="background:red">❌</button>
+            `;
+            container.appendChild(div);
         }
     });
-
-    // Ordenar por hora
-    listaAgendas.sort((a, b) => a.data.localeCompare(b.data));
-
-    if (listaAgendas.length === 0) {
-        container.innerHTML += "<p>Nenhum agendamento para este dia.</p>";
-        return;
-    }
-
-    listaAgendas.forEach(ag => {
-        const hora = ag.data.split("T")[1].substring(0, 5);
-        const div = document.createElement("div");
-        div.classList.add("card");
-        div.innerHTML = `
-            <strong>${hora} - ${ag.nome}</strong><br>
-            Serviço: ${ag.servico}<br>
-            WhatsApp: ${ag.whatsapp}<br>
-            Status: <span class="status-${ag.status}">${ag.status || "pendente"}</span><br><br>
-            <button onclick="concluir('${ag.id}')" style="width:45%; display:inline-block;">✔️</button>
-            <button onclick="cancelar('${ag.id}')" style="width:45%; display:inline-block; background:#ff4444;">❌</button>
-        `;
-        container.appendChild(div);
-    });
+    if (!encontrou) container.innerHTML += "<p>Nenhum agendamento.</p>";
 }
 
-async function concluir(id) {
-    await db.collection("agendamentos").doc(id).update({ status: "concluido" });
+async function mudarStatus(id, novoStatus) {
+    await db.collection("agendamentos").doc(id).update({ status: novoStatus });
     carregarAgendaDoDia();
 }
 
-async function cancelar(id) {
-    if(confirm("Deseja cancelar este horário?")) {
-        await db.collection("agendamentos").doc(id).update({ status: "cancelado" });
-        carregarAgendaDoDia();
-    }
-}
+// ==========================================
+// 3. ADMIN: GESTÃO DE BARBEIROS (admin.html)
+// ==========================================
 
-if (document.getElementById("dataFiltro")) {
-    document.getElementById("dataFiltro").addEventListener("change", carregarAgendaDoDia);
-}
-
-// --- ADMINISTRAÇÃO ---
 async function carregarBarbeiros() {
-    const select = document.getElementById("barbeiro");
-    if (!select) return;
-
+    const select = document.getElementById("barbeiro"); // index.html
+    const listaAdmin = document.getElementById("listaBarbeirosAdmin"); // admin.html
+    
     const snapshot = await db.collection("barbeiros").get();
-    select.innerHTML = '<option value="">Selecione o Barbeiro</option>';
+    
+    if (select) select.innerHTML = '<option value="">Selecione o Barbeiro</option>';
+    if (listaAdmin) listaAdmin.innerHTML = "";
+
     snapshot.forEach(doc => {
         const b = doc.data();
-        const option = document.createElement("option");
-        option.value = b.nome;
-        option.textContent = b.nome;
-        select.appendChild(option);
+        if (select) {
+            const opt = document.createElement("option");
+            opt.value = b.nome; opt.textContent = b.nome;
+            select.appendChild(opt);
+        }
+        if (listaAdmin) {
+            const div = document.createElement("div");
+            div.innerHTML = `${b.nome} <button onclick="excluirBarbeiro('${doc.id}')">Excluir</button>`;
+            listaAdmin.appendChild(div);
+        }
     });
 }
 
@@ -215,45 +204,20 @@ async function cadastrarBarbeiro() {
     const nome = document.getElementById("nomeBarbeiro").value;
     const login = document.getElementById("loginBarbeiro").value;
     const senha = document.getElementById("senhaBarbeiro").value;
+    if (!nome || !login || !senha) return alert("Preencha tudo!");
 
-    if (!nome || !login || !senha) {
-        alert("Preencha todos os campos!");
-        return;
-    }
-
-    try {
-        await db.collection("barbeiros").add({ nome, login, senha });
-        alert("Barbeiro cadastrado!");
-        location.reload();
-    } catch (e) {
-        alert("Erro ao cadastrar.");
-    }
+    await db.collection("barbeiros").add({ nome, login, senha });
+    alert("Cadastrado!");
+    location.reload();
 }
 
 async function excluirBarbeiro(id) {
-    if (confirm("Tem certeza?")) {
+    if (confirm("Excluir barbeiro?")) {
         await db.collection("barbeiros").doc(id).delete();
         location.reload();
     }
 }
 
-async function carregarBarbeirosParaExclusao() {
-    const container = document.getElementById("listaBarbeirosAdmin");
-    if (!container) return;
-    const snapshot = await db.collection("barbeiros").get();
-    container.innerHTML = "";
-    snapshot.forEach(doc => {
-        const b = doc.data();
-        const div = document.createElement("div");
-        div.classList.add("card");
-        div.innerHTML = `<strong>${b.nome}</strong><br><button onclick="excluirBarbeiro('${doc.id}')" style="background:#ff4444; color:white;">Excluir</button>`;
-        container.appendChild(div);
-    });
-}
-
-// Inicializações
+// INICIALIZAÇÃO GERAL
 carregarBarbeiros();
-carregarBarbeirosParaExclusao();
-if (window.location.pathname.includes("barbeiros.html")) {
-    carregarAgendaDoDia();
-}
+if (document.getElementById("listaAgendamentos")) carregarAgendaDoDia();
