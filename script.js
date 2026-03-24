@@ -19,6 +19,7 @@ async function carregarHorarios() {
 
     container.innerHTML = "Carregando...";
     const snapshot = await db.collection("agendamentos").where("barbeiro", "==", barbeiroSel).get();
+    
     const ocupados = [];
     snapshot.forEach(doc => {
         const ag = doc.data();
@@ -27,13 +28,34 @@ async function carregarHorarios() {
         }
     });
 
-    container.innerHTML = "";
+    container.innerHTML = ""; // Limpa o "Carregando..." para desenhar os botões
+
+    // --- INÍCIO DA LÓGICA DE HORAS PASSADAS ---
+    const agora = new Date();
+    const hojeData = agora.getFullYear() + "-" + 
+                     String(agora.getMonth() + 1).padStart(2, '0') + "-" + 
+                     String(agora.getDate()).padStart(2, '0');
+    const horaAtual = agora.getHours();
+    const minutoAtual = agora.getMinutes();
+    // --- FIM DA LÓGICA DE HORAS PASSADAS ---
+
     for (let h = 9; h < 18; h++) {
         ["00", "30"].forEach(m => {
             const hora = `${h.toString().padStart(2, "0")}:${m}`;
+
+            // VERIFICAÇÃO: Se for hoje, pula os horários que já passaram
+            if (dataInput === hojeData) {
+                const hNum = parseInt(h);
+                const mNum = parseInt(m);
+                if (hNum < horaAtual || (hNum === horaAtual && mNum <= minutoAtual)) {
+                    return; // Pula a criação desta caixinha específica
+                }
+            }
+
             const btn = document.createElement("div");
             btn.textContent = hora;
             btn.className = "horario-btn" + (ocupados.includes(hora) ? " ocupado" : "");
+            
             if (!ocupados.includes(hora)) {
                 btn.onclick = () => {
                     document.querySelectorAll(".horario-btn").forEach(b => b.classList.remove("selected"));
@@ -44,68 +66,11 @@ async function carregarHorarios() {
             container.appendChild(btn);
         });
     }
-    // --- LÓGICA PARA FILTRAR HORAS QUE JÁ PASSARAM ---
-    const agora = new Date();
-    // Formata a data de hoje para YYYY-MM-DD (ex: 2026-03-24)
-    const hojeData = agora.getFullYear() + "-" + 
-                     String(agora.getMonth() + 1).padStart(2, '0') + "-" + 
-                     String(agora.getDate()).padStart(2, '0');
-    
-    const horaAtual = agora.getHours();
-    const minutoAtual = agora.getMinutes();
 
-    const horariosOpcoes = [];
-    for (let h = 9; h < 18; h++) {
-        horariosOpcoes.push(`${h.toString().padStart(2, "0")}:00`);
-        horariosOpcoes.push(`${h.toString().padStart(2, "0")}:30`);
+    // Se após filtrar tudo o container continuar vazio (ex: fim do expediente)
+    if (container.innerHTML === "" && dataInput === hojeData) {
+        container.innerHTML = "<p style='color:gray; font-size:13px;'>Não há mais horários para hoje.</p>";
     }
-
-    try {
-        const snapshot = await db.collection("agendamentos")
-            .where("barbeiro", "==", barbeiroSelecionado)
-            .get();
-
-        const ocupados = [];
-        snapshot.forEach(doc => {
-            const ag = doc.data();
-            if (ag.data.startsWith(dataInput) && ag.status !== "cancelado") {
-                const hora = ag.data.split("T")[1].substring(0, 5);
-                ocupados.push(hora);
-            }
-        });
-
-        horariosOpcoes.forEach(h => {
-            const [horaOpcao, minutoOpcao] = h.split(":").map(Number);
-            
-            // VERIFICAÇÃO: Se for hoje, pula os horários que já passaram
-            if (dataInput === hojeData) {
-                if (horaOpcao < horaAtual || (horaOpcao === horaAtual && minutoOpcao <= minutoAtual)) {
-                    return; // Não cria a caixinha
-                }
-            }
-
-            const btn = document.createElement("div");
-            btn.textContent = h;
-            btn.classList.add("horario-btn");
-
-            if (ocupados.includes(h)) {
-                btn.classList.add("ocupado");
-            } else {
-                btn.addEventListener("click", () => {
-                    document.querySelectorAll(".horario-btn").forEach(b => b.classList.remove("selected"));
-                    btn.classList.add("selected");
-                    if (horaSelectInput) horaSelectInput.value = h;
-                });
-            }
-            container.appendChild(btn);
-        });
-
-        if (container.innerHTML === "" && dataInput === hojeData) {
-            container.innerHTML = "<p style='font-size:12px; color:#ff4444;'>Não há mais horários disponíveis para hoje.</p>";
-        }
-
-    } catch (e) { console.error("Erro horários:", e); }
-}
 }
 
 // --- 2. BARBEIRO: AGENDA ---
