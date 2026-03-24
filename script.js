@@ -44,6 +44,68 @@ async function carregarHorarios() {
             container.appendChild(btn);
         });
     }
+    // --- LÓGICA PARA FILTRAR HORAS QUE JÁ PASSARAM ---
+    const agora = new Date();
+    // Formata a data de hoje para YYYY-MM-DD (ex: 2026-03-24)
+    const hojeData = agora.getFullYear() + "-" + 
+                     String(agora.getMonth() + 1).padStart(2, '0') + "-" + 
+                     String(agora.getDate()).padStart(2, '0');
+    
+    const horaAtual = agora.getHours();
+    const minutoAtual = agora.getMinutes();
+
+    const horariosOpcoes = [];
+    for (let h = 9; h < 18; h++) {
+        horariosOpcoes.push(`${h.toString().padStart(2, "0")}:00`);
+        horariosOpcoes.push(`${h.toString().padStart(2, "0")}:30`);
+    }
+
+    try {
+        const snapshot = await db.collection("agendamentos")
+            .where("barbeiro", "==", barbeiroSelecionado)
+            .get();
+
+        const ocupados = [];
+        snapshot.forEach(doc => {
+            const ag = doc.data();
+            if (ag.data.startsWith(dataInput) && ag.status !== "cancelado") {
+                const hora = ag.data.split("T")[1].substring(0, 5);
+                ocupados.push(hora);
+            }
+        });
+
+        horariosOpcoes.forEach(h => {
+            const [horaOpcao, minutoOpcao] = h.split(":").map(Number);
+            
+            // VERIFICAÇÃO: Se for hoje, pula os horários que já passaram
+            if (dataInput === hojeData) {
+                if (horaOpcao < horaAtual || (horaOpcao === horaAtual && minutoOpcao <= minutoAtual)) {
+                    return; // Não cria a caixinha
+                }
+            }
+
+            const btn = document.createElement("div");
+            btn.textContent = h;
+            btn.classList.add("horario-btn");
+
+            if (ocupados.includes(h)) {
+                btn.classList.add("ocupado");
+            } else {
+                btn.addEventListener("click", () => {
+                    document.querySelectorAll(".horario-btn").forEach(b => b.classList.remove("selected"));
+                    btn.classList.add("selected");
+                    if (horaSelectInput) horaSelectInput.value = h;
+                });
+            }
+            container.appendChild(btn);
+        });
+
+        if (container.innerHTML === "" && dataInput === hojeData) {
+            container.innerHTML = "<p style='font-size:12px; color:#ff4444;'>Não há mais horários disponíveis para hoje.</p>";
+        }
+
+    } catch (e) { console.error("Erro horários:", e); }
+}
 }
 
 // --- 2. BARBEIRO: AGENDA ---
