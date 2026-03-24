@@ -47,6 +47,28 @@ async function carregarHorarios() {
 }
 
 // --- 2. BARBEIRO: AGENDA ---
+
+// --- 2. BARBEIRO: LOGIN E AGENDA (login.html / barbeiros.html) ---
+async function fazerLogin() {
+    const loginInput = document.getElementById("userLogin").value;
+    const senhaInput = document.getElementById("userSenha").value;
+
+    try {
+        const snapshot = await db.collection("barbeiros")
+            .where("login", "==", loginInput)
+            .where("senha", "==", senhaInput)
+            .get();
+
+        if (!snapshot.empty) {
+            localStorage.setItem("barbeiroLogado", snapshot.docs[0].data().nome);
+            window.location.href = "barbeiros.html";
+        } else {
+            alert("Login ou senha incorretos!");
+        }
+    } catch (error) {
+        console.error("Erro no login:", error);
+    }
+}
 async function carregarAgendaDoDia() {
     const container = document.getElementById("listaAgendamentos");
     const barbeiroNome = localStorage.getItem("barbeiroLogado");
