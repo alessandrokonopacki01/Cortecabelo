@@ -1,20 +1,27 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Login Barbeiro</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login do barbeiro</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div class="container">
-        <h1>Login Barbeiro</h1>
-        <input type="text" id="userLogin" placeholder="Seu login">
-        <input type="password" id="userSenha" placeholder="Sua senha">
-        <button onclick="fazerLogin()">Entrar</button>
-    </div>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="script.js"></script>
+<body data-page="login">
+  <main class="container">
+    <p class="kicker">ÁREA DO PROFISSIONAL</p>
+    <h1 id="tituloLogin">Login do barbeiro</h1>
+    <p id="mensagemLogin" class="subtitulo" role="status">Carregando salão...</p>
+    <form id="formLogin" hidden>
+      <label for="userLogin">Login</label>
+      <input type="text" id="userLogin" placeholder="Seu login" autocomplete="username" required>
+      <label for="userSenha">Senha</label>
+      <input type="password" id="userSenha" placeholder="Sua senha" autocomplete="current-password" required>
+      <button type="submit">Entrar</button>
+    </form>
+    <a id="voltarAgendamento" class="link-discreto" href="index.html">Voltar ao agendamento</a>
+  </main>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

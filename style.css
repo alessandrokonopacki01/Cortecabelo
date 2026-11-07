@@ -1,106 +1,81 @@
+:root {
+  --ouro: #d4af37;
+  --ouro-escuro: #b8962e;
+  --fundo: #1c1c1c;
+  --cartao: #2a2a2a;
+  --texto: #f5f5f5;
+  --suave: #bbb;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-
-  background: url('img/fundo.png') no-repeat center center;
+  min-height: 100vh;
+  padding: 20px 12px 45px;
+  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(rgba(0,0,0,.57),rgba(0,0,0,.72)), url('img/fundo.png') no-repeat center center fixed;
   background-size: cover;
-  background-attachment: fixed;
-
-  color: white;
+  color: var(--texto);
 }
-
 .container {
-  max-width: 400px;
-  margin: 60px auto;
-  background: #1c1c1c;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 0 20px rgba(0,0,0,0.5);
-}
-
-.container img {
-  width: 120px;
-  display: block;
-  margin: 0 auto 15px;
-  filter: drop-shadow(0 0 30px rgba(212,175,55,0.5));
-}
-
-h1 {
-  text-align: center;
-  color: #d4af37;
-}
-
-input, select, button {
   width: 100%;
-  margin: 12px 0;
-  padding: 14px;
-  border-radius: 8px;
-  border: none;
-  font-size: 14px;
-  box-sizing: border-box; /* 🔥 ESSENCIAL */
+  max-width: 460px;
+  margin: 24px auto;
+  background: rgba(28,28,28,.97);
+  padding: 25px;
+  border: 1px solid rgba(212,175,55,.20);
+  border-radius: 14px;
+  box-shadow: 0 0 24px rgba(0,0,0,.56);
+}
+.container.largo { max-width: 880px; }
+.logo { width: 105px; height: auto; display: block; margin: 0 auto 15px; filter: drop-shadow(0 0 25px rgba(212,175,55,.35)); }
+h1 { text-align: center; color: var(--ouro); font-size: clamp(1.4rem,5vw,1.9rem); margin: 8px 0 10px; }
+h2 { margin-top: 0; color: var(--ouro); font-size: 1.16rem; }
+h3 { font-size: 1rem; margin: 22px 0 10px; }
+p { line-height: 1.5; }
+.kicker { text-align: center; color: var(--ouro); letter-spacing: .16em; font-size: 11px; font-weight: bold; margin: 4px 0; }
+.subtitulo { text-align: center; color: var(--suave); font-size: 14px; margin-bottom: 22px; }
+label { display: block; margin: 14px 0 5px; font-size: 13px; font-weight: bold; }
+input,select,button { font: inherit; width: 100%; border-radius: 8px; border: none; font-size: 14px; }
+input,select { padding: 13px; background: var(--cartao); color: #fff; min-height: 47px; border: 1px solid #474747; }
+input:focus,select:focus,button:focus-visible,a:focus-visible { outline: 2px solid var(--ouro); outline-offset: 2px; }
+button { padding: 13px 15px; min-height: 44px; background: var(--ouro); color: #141414; font-weight: bold; cursor: pointer; transition: background .2s; }
+button:hover { background: var(--ouro-escuro); }
+button:disabled { opacity: .6; cursor: wait; }
+form button[type="submit"] { margin-top: 19px; }
+.btn-secundario { background: #414141; color: #fff; }
+.btn-secundario:hover { background: #535353; }
+.btn-perigo { background: #8c3c3c; color: white; }
+.btn-perigo:hover { background: #aa4545; }
+.btn-pequeno { padding: 9px 11px; width: auto; min-height: 36px; font-size: 13px; }
+.link-discreto { display: block; text-align: center; color: var(--ouro); margin-top: 20px; font-size: 13px; text-decoration: none; }
+.link-discreto:hover { text-decoration: underline; }
+.horarios-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 9px; margin-top: 12px; }
+.horarios-grid .ajuda { grid-column: 1 / -1; }
+.horario-btn { padding: 11px 2px; text-align: center; background: #303030; border: 1px solid #565656; color: #fff; }
+.horario-btn:hover:not(:disabled) { border-color: var(--ouro); background: #373737; }
+.horario-btn.selected { background: var(--ouro); color: #000; font-weight: bold; }
+.horario-btn.ocupado { background: #383838; color: #999; opacity: .65; cursor: not-allowed; }
+.ajuda { color: var(--suave); font-size: 13px; }
+.aviso { margin: 20px 0 0; font-size: 12px; color: #cfb995; }
+.secao { padding-top: 21px; margin-top: 23px; border-top: 1px solid #444; }
+.card { background: var(--cartao); padding: 15px; border-radius: 10px; margin: 10px 0; border-left: 4px solid var(--ouro); }
+.card p { margin: 6px 0; }
+.card-titulo { font-weight: bold; font-size: 15px; }
+.linha-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+.linha-acoes button { width: auto; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(195px,1fr)); align-items: end; gap: 0 16px; }
+.form-grid > button { margin-bottom: 0; }
+.links-salao { padding: 12px; background: #252525; border-radius: 8px; }
+.links-salao a { color: var(--ouro); overflow-wrap: anywhere; }
+.estado { display: inline-block; font-size: 12px; color: #b0e3c0; margin-left: 5px; }
+.estado.inativo { color: #f8b2b2; }
+@media (max-width: 540px) {
+  body { padding: 8px 10px 26px; background-attachment: scroll; }
+  .container { padding: 21px 17px; margin: 13px auto; }
+  .form-grid { grid-template-columns: 1fr; }
+  .horarios-grid { gap: 7px; }
 }
 
-input, select {
-  background: #2a2a2a;
-  color: white;
-  height: 48px;
-}
-
-button {
-  background: #d4af37;
-  color: black;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-button:hover {
-  background: #b8962e;
-}
-
-select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-}
-
-.horarios-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.horario-btn {
-  padding: 10px;
-  background: #2a2a2a;
-  border-radius: 8px;
-  text-align: center;
-  cursor: pointer;
-  transition: 0.3s;
-  border: 1px solid transparent;
-}
-
-.horario-btn:hover {
-  border: 1px solid #d4af37;
-}
-
-.horario-btn.selected {
-  background: #d4af37;
-  color: black;
-  font-weight: bold;
-}
-
-.horario-btn.ocupado {
-  background: #444;
-  color: #888;
-  cursor: not-allowed;
-}
-
-.card {
-  background: #2a2a2a;
-  padding: 15px;
-  border-radius: 10px;
-  margin: 10px 0;
-  border-left: 4px solid #d4af37;
-}
+.migracao { margin-top: 26px; padding: 15px; background: #242424; border: 1px solid #444; border-radius: 8px; }
+.migracao summary { color: var(--ouro); cursor: pointer; font-weight: bold; }

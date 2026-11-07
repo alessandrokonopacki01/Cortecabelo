@@ -2,56 +2,77 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Admin - Barbeiros</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Administração | Barbearias</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-page="admin">
+  <script>
+    // Mantida, a pedido, a verificação simples de senha da versão original.
+    // ATENÇÃO: isso não protege os dados no Firebase contra acesso externo.
+    window.adminLiberado = prompt("Senha admin:") === "atomo123'";
+    if (!window.adminLiberado) {
+      alert("Acesso negado");
+      window.location.replace("index.html");
+    }
+  </script>
+  <main class="container largo" id="painelAdmin" hidden>
+    <p class="kicker">MEU PAINEL</p>
+    <h1>Gerenciar barbearias</h1>
+    <p class="subtitulo">Cadastre salões, compartilhe seus links e organize os profissionais.</p>
 
-<script>
-  // 🔐 proteção simples
-  const senha = prompt("Senha admin:");
+    <section class="secao">
+      <h2>1. Cadastrar salão</h2>
+      <form id="formSalao" class="form-grid">
+        <div>
+          <label for="nomeSalao">Nome da barbearia</label>
+          <input id="nomeSalao" type="text" placeholder="Ex.: Barbearia Central" maxlength="80" required>
+        </div>
+        <div>
+          <label for="slugSalao">Identificador do link</label>
+          <input id="slugSalao" type="text" placeholder="Ex.: barbearia-central" maxlength="45" required>
+        </div>
+        <button type="submit">Cadastrar salão</button>
+      </form>
+      <p class="ajuda">Cada salão tem um link exclusivo. O identificador não pode ser alterado depois.</p>
+    </section>
 
-  if (senha !== "atomo123'") {
-    alert("Acesso negado");
-    window.location.href = "index.html";
-  }
-</script>
+    <section class="secao">
+      <h2>2. Salões cadastrados</h2>
+      <div id="listaSaloes"><p class="ajuda">Carregando...</p></div>
+    </section>
 
-<div class="container">
-  <h1>Cadastrar Barbeiro</h1>
-
-  <input type="text" id="nomeBarbeiro" placeholder="Nome">
-  <input type="text" id="loginBarbeiro" placeholder="Login">
-  <input type="password" id="senhaBarbeiro" placeholder="Senha">
-
-  <button onclick="cadastrarBarbeiro()">Cadastrar</button>
-</div>
-<div class="container">
-  <h2>Barbeiros Cadastrados</h2>
-  <div id="listaBarbeirosAdmin"></div>
-</div>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
-<script src="script.js"></script>
-
-<script>
-  async function cadastrarBarbeiro() {
-    const nome = document.getElementById("nomeBarbeiro").value;
-    const login = document.getElementById("loginBarbeiro").value;
-    const senha = document.getElementById("senhaBarbeiro").value;
-
-    await db.collection("barbeiros").add({
-      nome,
-      login,
-      senha
-    });
-
-    alert("Barbeiro cadastrado!");
-  }
-</script>
-
+    <section class="secao" id="painelSalao" hidden>
+      <h2 id="tituloPainelSalao">Profissionais do salão</h2>
+      <div id="linksSalao" class="links-salao"></div>
+      <h3>Cadastrar barbeiro</h3>
+      <form id="formBarbeiro" class="form-grid">
+        <div>
+          <label for="nomeBarbeiro">Nome</label>
+          <input id="nomeBarbeiro" type="text" placeholder="Nome do profissional" maxlength="80" required>
+        </div>
+        <div>
+          <label for="loginBarbeiro">Login</label>
+          <input id="loginBarbeiro" type="text" placeholder="Login do profissional" required>
+        </div>
+        <div>
+          <label for="senhaBarbeiro">Senha</label>
+          <input id="senhaBarbeiro" type="password" placeholder="Senha" required>
+        </div>
+        <button type="submit">Cadastrar barbeiro neste salão</button>
+      </form>
+      <h3>Barbeiros deste salão</h3>
+      <div id="listaBarbeirosAdmin"></div>
+      <details class="migracao">
+        <summary>Já tenho barbeiros e agendamentos no sistema antigo</summary>
+        <p class="ajuda">Copie os dados antigos para este salão sem apagar as coleções originais do Firebase. Faça isso apenas em um salão novo e vazio.</p>
+        <button id="btnMigrarAntigo" type="button" class="btn-secundario">Importar os dados antigos para este salão</button>
+      </details>
+    </section>
+    <p class="aviso">Esta versão mantém o login anterior. Os dados no Firebase ainda precisam de regras de acesso adequadas antes do uso comercial.</p>
+  </main>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

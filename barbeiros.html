@@ -1,32 +1,23 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
-    <meta charset="UTF-8">
-    <title>Painel do Barbeiro</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agenda do barbeiro</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
-<body>
-
-    <div class="container">
-        <h1>Agenda do Dia</h1>
-        <input type="date" id="dataFiltro">
-        <div id="listaAgendamentos"></div>
-    </div>
-    <button onclick="localStorage.removeItem('barbeiroLogado'); window.location.href='login.html';"
-        style="background:#444; margin-bottom: 20px;">
-        Logout / Sair
-    </button>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="script.js"></script>
-
-    <script>
-        carregarAgendaDoDia();
-    </script>
-
+<body data-page="barbeiro">
+  <main class="container">
+    <p class="kicker" id="nomeSalaoAgenda">ÁREA DO PROFISSIONAL</p>
+    <h1 id="tituloAgenda">Minha agenda</h1>
+    <p id="mensagemAgenda" class="subtitulo" role="status">Carregando sua agenda...</p>
+    <label for="dataFiltro">Selecione a data</label>
+    <input type="date" id="dataFiltro">
+    <div id="listaAgendamentos"></div>
+    <button id="btnSair" type="button" class="btn-secundario">Sair da conta</button>
+  </main>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="script.js"></script>
 </body>
-
 </html>

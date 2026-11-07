@@ -1,39 +1,48 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
-    <meta charset="UTF-8">
-    <title>Agendamento Barbearia</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agendamento | Barbearia</title>
+  <link rel="stylesheet" href="style.css">
 </head>
+<body data-page="cliente">
+  <main class="container">
+    <img src="img/logo.jpg" alt="Logotipo do sistema" class="logo">
+    <p class="kicker">AGENDAMENTO ONLINE</p>
+    <h1 id="tituloSalao">Sua barbearia</h1>
+    <p id="mensagemSalao" class="subtitulo" role="status">Carregando informações...</p>
 
-<body>
-    <div class="container">
-        <img src="img/logo.jpg" style="width:120px; display:block; margin:0 auto 10px;">
-        <h1>Agendar Corte</h1>
+    <form id="formAgendamento" hidden>
+      <label for="nome">Seu nome</label>
+      <input type="text" id="nome" placeholder="Como podemos chamar você?" maxlength="80" autocomplete="name" required>
 
-        <form id="formAgendamento">
-            <input type="text" id="nome" placeholder="Seu nome" required>
-            <input type="text" id="whatsapp" placeholder="WhatsApp" required>
-            <select id="barbeiro"></select>
-            <select id="servico">
-                <option value="Corte">Corte</option>
-                <option value="Corte + Barba">Corte + Barba</option>
-                <option value="Corte + Barba">Corte + Barba + Sobramcelha</option>
-            </select>
+      <label for="whatsapp">WhatsApp</label>
+      <input type="tel" id="whatsapp" placeholder="(42) 99999-9999" maxlength="20" autocomplete="tel" required>
 
-           <input type="date" id="data" required>
-            <div id="horarios" class="horarios-grid"></div>
-            <input type="hidden" id="horaSelecionada">
-            
+      <label for="barbeiro">Escolha seu barbeiro</label>
+      <select id="barbeiro" required><option value="">Carregando profissionais...</option></select>
 
-            <button type="submit">Agendar</button>
-        </form>
-    </div>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-    <script src="script.js"></script>
+      <label for="servico">Serviço</label>
+      <select id="servico" required>
+        <option value="Corte">Corte</option>
+        <option value="Corte + Barba">Corte + Barba</option>
+        <option value="Corte + Barba + Sobrancelha">Corte + Barba + Sobrancelha</option>
+      </select>
 
+      <label for="data">Data</label>
+      <input type="date" id="data" required>
+      <label>Horários disponíveis</label>
+      <div id="horarios" class="horarios-grid" aria-live="polite">
+        <p class="ajuda">Escolha um profissional e uma data.</p>
+      </div>
+      <input type="hidden" id="horaSelecionada" required>
+      <button id="btnAgendar" type="submit">Confirmar agendamento</button>
+    </form>
+    <a id="linkProfissional" class="link-discreto" href="login.html" hidden>Sou barbeiro · acessar minha agenda</a>
+  </main>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="script.js"></script>
 </body>
-
 </html>
