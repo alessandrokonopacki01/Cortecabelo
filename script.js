@@ -331,21 +331,30 @@ async function carregarHorarios() {
         if (!ocupado) {
           totalDisponivel++;
 
-          b.addEventListener("click", () => {
-            container
-              .querySelectorAll(".horario-btn")
-              .forEach(btn => {
-                btn.classList.remove("selected");
-                btn.setAttribute("aria-pressed", "false");
-              });
 
-            b.classList.add("selected");
-            b.setAttribute("aria-pressed", "true");
+b.addEventListener("click", () => {
+  const estavaSelecionado = b.classList.contains("selected");
 
-            document.getElementById(
-              "horaSelecionada"
-            ).value = horario;
-          });
+  // Limpa qualquer seleção anterior
+  container.querySelectorAll(".horario-btn").forEach(btn => {
+    btn.classList.remove("selected");
+    btn.setAttribute("aria-pressed", "false");
+  });
+
+  const campoHora = document.getElementById("horaSelecionada");
+
+  // Se clicou novamente, desmarca o horário
+  if (estavaSelecionado) {
+    campoHora.value = "";
+    return;
+  }
+
+  // Caso contrário, seleciona o novo horário
+  b.classList.add("selected");
+  b.setAttribute("aria-pressed", "true");
+  campoHora.value = horario;
+});
+
         }
 
         container.appendChild(b);
