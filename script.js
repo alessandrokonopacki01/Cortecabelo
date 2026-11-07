@@ -1046,6 +1046,16 @@ async function carregarSaloes() {
         )
       );
 
+      
+acoes.append(
+  criarBotao(
+    "🗑️ Excluir salão",
+    () => excluirSalao(salao),
+    "btn-pequeno btn-perigo"
+  )
+);
+
+
       card.append(acoes);
       lista.append(card);
     });
@@ -1105,6 +1115,50 @@ async function mudarStatusSalao(salao) {
     );
   }
 }
+
+
+async function excluirSalao(salao) {
+  const confirmacao = prompt(
+    `Para excluir "${salao.nome}", digite o identificador:\n${salao.id}`
+  );
+
+  if (confirmacao !== salao.id) {
+    if (confirmacao !== null) {
+      alert("Identificador incorreto. Exclusão cancelada.");
+    }
+    return;
+  }
+
+  try {
+    const [barbeiros, agendamentos] = await Promise.all([
+      referenciaBarbeiros(salao.id).limit(1).get(),
+      referenciaAgendamentos(salao.id).limit(1).get()
+    ]);
+
+    if (!barbeiros.empty || !agendamentos.empty) {
+      alert(
+        "Este salão possui barbeiros ou agendamentos. " +
+        "Remova os dados antes de excluir o salão. " +
+        "Você também pode bloqueá-lo."
+      );
+      return;
+    }
+
+    await referenciaSalao(salao.id).delete();
+
+    if (salaoAdminId === salao.id) {
+      salaoAdminId = null;
+      document.getElementById("painelSalao").hidden = true;
+    }
+
+    alert("Salão excluído com sucesso!");
+    await carregarSaloes();
+
+  } catch (erro) {
+    mostrarErro("Não foi possível excluir o salão.", erro);
+  }
+}
+
 
 async function abrirSalaoAdmin(id) {
   salaoAdminId = id;
