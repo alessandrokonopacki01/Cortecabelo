@@ -1117,47 +1117,82 @@ async function mudarStatusSalao(salao) {
 }
 
 
+
 async function excluirSalao(salao) {
   const confirmacao = prompt(
-    `Para excluir "${salao.nome}", digite o identificador:\n${salao.id}`
+    `ATENÇÃO! Você está prestes a excluir:\n\n` +
+    `${salao.nome}\n\n` +
+    `Todos os barbeiros e agendamentos serão apagados permanentemente!\n\n` +
+    `Digite "${salao.id}" para confirmar:`
   );
 
-  if (confirmacao !== salao.id) {
-    if (confirmacao !== null) {
-      alert("Identificador incorreto. Exclusão cancelada.");
-    }
+  if (confirmacao === null) return;
+
+  if (confirmacao.trim() !== salao.id) {
+    alert("Identificador incorreto. Exclusão cancelada.");
     return;
   }
 
-  try {
-    const [barbeiros, agendamentos] = await Promise.all([
-      referenciaBarbeiros(salao.id).limit(1).get(),
-      referenciaAgendamentos(salao.id).limit(1).get()
-    ]);
+  const salaoRef = referenciaSalao(salao.id);
 
-    if (!barbeiros.empty || !agendamentos.empty) {
-      alert(
-        "Este salão possui barbeiros ou agendamentos. " +
-        "Remova os dados antes de excluir o salão. " +
-        "Você também pode bloqueá-lo."
-      );
-      return;
+  try {
+    // Bloqueia novos agendamentos antes da exclusão
+    await salaoRef.update({ ativo: false });
+
+    // Exclui todos os agendamentos e barbeiros
+    for (const colecao of ["agendamentos", "barbeiros"]) {
+      while (true) {
+        const snapshot = await salaoRef
+          .collection(colecao)
+          .limit(250)
+          .get();
+
+        if (snapshot.empty) break;
+
+        const batch = db.batch();
+
+        snapshot.docs.forEach(doc => {
+          batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+      }
     }
 
-    await referenciaSalao(salao.id).delete();
+    // Confere se as subcoleções estão vazias
+    const [agendamentos, barbeiros] = await Promise.all([
+      salaoRef.collection("agendamentos").limit(1).get(),
+      salaoRef.collection("barbeiros").limit(1).get()
+    ]);
+
+    if (!agendamentos.empty || !barbeiros.empty) {
+      throw new Error("Ainda existem dados no salão.");
+    }
+
+    // Exclui o salão
+    await salaoRef.delete();
 
     if (salaoAdminId === salao.id) {
       salaoAdminId = null;
       document.getElementById("painelSalao").hidden = true;
     }
 
-    alert("Salão excluído com sucesso!");
+    alert("Salão e todos os seus dados excluídos!");
+
     await carregarSaloes();
 
   } catch (erro) {
-    mostrarErro("Não foi possível excluir o salão.", erro);
+    console.error("Erro ao excluir salão:", erro);
+
+    alert(
+      "Não foi possível concluir a exclusão. " +
+      "Alguns dados podem ter sido apagados. " +
+      "O salão permanece bloqueado. " +
+      "Verifique as permissões do Firebase e tente novamente."
+    );
   }
 }
+
 
 
 async function abrirSalaoAdmin(id) {
