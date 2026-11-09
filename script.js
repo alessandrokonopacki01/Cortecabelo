@@ -77,6 +77,75 @@ function linkPagina(paginaHtml, slug) {
   return url.href;
 }
 
+
+function dataLocalISO(data) {
+  return [
+    data.getFullYear(),
+    String(data.getMonth() + 1).padStart(2, "0"),
+    String(data.getDate()).padStart(2, "0")
+  ].join("-");
+}
+
+function adicionarPeriodo(dataISO, plano) {
+  const [ano, mes, dia] = dataISO.split("-").map(Number);
+
+  if (plano === "teste") {
+    const data = new Date(ano, mes - 1, dia, 12);
+    data.setDate(data.getDate() + 30);
+    return dataLocalISO(data);
+  }
+
+  const meses = plano === "mensal" ? 1 : 12;
+
+  const primeiroDia = new Date(
+    ano, mes - 1 + meses, 1, 12
+  );
+
+  const ultimoDia = new Date(
+    primeiroDia.getFullYear(),
+    primeiroDia.getMonth() + 1,
+    0,
+    12
+  ).getDate();
+
+  return dataLocalISO(new Date(
+    primeiroDia.getFullYear(),
+    primeiroDia.getMonth(),
+    Math.min(dia, ultimoDia),
+    12
+  ));
+}
+
+function diasAteVencimento(dataISO) {
+  if (!dataISO) return null;
+
+  const hoje = hojeLocal();
+
+  const inicio = new Date(`${hoje}T12:00:00`);
+  const fim = new Date(`${dataISO}T12:00:00`);
+
+  if (Number.isNaN(fim.getTime())) return null;
+
+  return Math.round(
+    (fim.getTime() - inicio.getTime()) / 86400000
+  );
+}
+
+function situacaoAssinatura(salao) {
+  if (salao.ativo === false) return "bloqueado";
+
+  if (!salao.vencimentoPlano) return "sem_plano";
+
+  const dias = diasAteVencimento(salao.vencimentoPlano);
+
+  if (dias === null) return "sem_plano";
+  if (dias < 0) return "vencido";
+  if (dias === 0) return "ultimo_dia";
+
+  return "ativo";
+}
+
+
 function referenciaSalao(slug) {
   return db.collection("saloes").doc(slug);
 }
@@ -127,12 +196,15 @@ function mostrarErro(mensagem, erro) {
   );
 }
 
+
 async function verificarSalao(slug) {
   if (!identificadorValido(slug)) {
     throw new Error("LINK_INVALIDO");
   }
 
-  const doc = await referenciaSalao(slug).get();
+  const doc = await referenciaSalao(slug).get({
+    source: "server"
+  });
 
   if (!doc.exists) {
     throw new Error("SALAO_NAO_ENCONTRADO");
@@ -143,12 +215,21 @@ async function verificarSalao(slug) {
     ...doc.data()
   };
 
-  if (salao.ativo === false) {
+  const situacao = situacaoAssinatura(salao);
+
+  if (situacao === "bloqueado") {
     throw new Error("SALAO_INATIVO");
   }
 
+  if (situacao === "vencido") {
+    throw new Error("PLANO_VENCIDO");
+  }
+
+  // Salões antigos sem plano continuam funcionando
+  // até que o administrador configure a assinatura.
   return salao;
 }
+
 
 function mensagemSalaoErro(erro) {
   if (
@@ -157,6 +238,11 @@ function mensagemSalaoErro(erro) {
   ) {
     return "Link não encontrado. Peça à barbearia o endereço correto.";
   }
+
+if (erro.message === "PLANO_VENCIDO") {
+  return "A assinatura desta barbearia venceu. " +
+    "Entre em contato com o suporte para renovar o acesso.";
+}
 
   if (erro.message === "SALAO_INATIVO") {
     return "Os agendamentos deste salão estão temporariamente indisponíveis.";
@@ -1078,6 +1164,40 @@ if (salao.whatsappResponsavel) {
 
       const acoes = criarElemento("div", "linha-acoes");
 
+const situacao = situacaoAssinatura(salao);
+
+const mensagemStatus = {
+  ativo: "Assinatura em dia",
+  ultimo_dia: "ATENÇÃO: vence hoje!",
+  vencido: "ASSINATURA VENCIDA",
+  bloqueado: "Salão bloqueado",
+  sem_plano: "Assinatura não configurada"
+};
+
+card.append(
+  criarElemento(
+    "p",
+    "ajuda",
+    mensagemStatus[situacao]
+  )
+);
+
+acoes.append(
+  criarBotao(
+    "Renovar mensal",
+    () => renovarPlano(salao, "mensal")
+  )
+);
+
+acoes.append(
+  criarBotao(
+    "Renovar anual",
+    () => renovarPlano(salao, "anual"),
+    "btn-pequeno btn-secundario"
+  )
+);
+
+
       acoes.append(
         criarBotao(
           "Gerenciar barbeiros",
@@ -1339,6 +1459,86 @@ document.getElementById("vencimentoSalao").value =
     );
   }
 }
+
+
+async function renovarPlano(salao, plano) {
+  if (!window.adminLiberado) {
+    alert("Acesso não autorizado.");
+    return;
+  }
+
+  if (!["mensal", "anual"].includes(plano)) {
+    alert("Plano inválido.");
+    return;
+  }
+
+  const nomePlano = plano === "mensal"
+    ? "MENSAL"
+    : "ANUAL";
+
+  const confirmar = confirm(
+    `Confirmar renovação ${nomePlano}?\n\n` +
+    `Salão: ${salao.nome}\n\n` +
+    `Confirme somente após verificar o pagamento.`
+  );
+
+  if (!confirmar) return;
+
+  try {
+    const ref = referenciaSalao(salao.id);
+
+    await db.runTransaction(async tx => {
+      const snapshot = await tx.get(ref);
+
+      if (!snapshot.exists) {
+        throw new Error("SALAO_NAO_ENCONTRADO");
+      }
+
+      const dados = snapshot.data();
+      const hoje = hojeLocal();
+
+      // Se o plano ainda está em dia, acrescenta
+      // o período ao vencimento atual.
+      // Se venceu, começa a contar a partir de hoje.
+      const base = dados.vencimentoPlano &&
+        dados.vencimentoPlano > hoje
+          ? dados.vencimentoPlano
+          : hoje;
+
+      const novoVencimento = adicionarPeriodo(
+        base,
+        plano
+      );
+
+      tx.update(ref, {
+        plano: plano,
+        inicioPlano: hoje,
+        vencimentoPlano: novoVencimento,
+        ativo: true,
+        ultimaRenovacao: firebase.firestore
+          .FieldValue.serverTimestamp()
+      });
+    });
+
+    alert(
+      `Plano ${nomePlano} renovado com sucesso!`
+    );
+
+    await carregarSaloes();
+
+    if (salaoAdminId === salao.id) {
+      await abrirSalaoAdmin(salao.id);
+    }
+
+  } catch (erro) {
+    mostrarErro(
+      "Não foi possível renovar o plano.",
+      erro
+    );
+  }
+}
+
+
 async function salvarAssinatura(evento) {
   evento.preventDefault();
 
