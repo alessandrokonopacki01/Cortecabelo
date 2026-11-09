@@ -28,6 +28,11 @@ let barbeirosAtuais = new Map();
 let salaoAdminId = null;
 let carregamentoHorarios = 0;
 let sessaoAtual = null;
+let cancelarEscutaAgenda = null;
+let cancelarEscutaSalao = null;
+let intervaloVencimento = null;
+let ultimoEstadoAssinatura = null;
+
 
 // =====================================
 // FUNÇÕES AUXILIARES
@@ -197,6 +202,66 @@ function mostrarErro(mensagem, erro) {
 }
 
 
+function vigiarVencimento(salao) {
+  if (cancelarEscutaSalao) {
+    cancelarEscutaSalao();
+    cancelarEscutaSalao = null;
+  }
+
+  if (intervaloVencimento) {
+    clearInterval(intervaloVencimento);
+    intervaloVencimento = null;
+  }
+
+  ultimoEstadoAssinatura = situacaoAssinatura(salao);
+
+  // Acompanha alterações de plano e bloqueio no Firebase.
+  cancelarEscutaSalao = referenciaSalao(salao.id)
+    .onSnapshot(doc => {
+      if (!doc.exists) {
+        window.location.reload();
+        return;
+      }
+
+      const dadosAtualizados = {
+        id: doc.id,
+        ...doc.data()
+      };
+
+      const novoEstado = situacaoAssinatura(dadosAtualizados);
+
+      if (novoEstado !== ultimoEstadoAssinatura) {
+        window.location.reload();
+        return;
+      }
+
+      salaoAtual = dadosAtualizados;
+
+      if (pagina === "barbeiro") {
+        mostrarAssinaturaBarbeiro(salaoAtual);
+      }
+    }, erro => {
+      console.error(
+        "Não foi possível monitorar a assinatura:",
+        erro
+      );
+    });
+
+  // Detecta a virada do dia com a página aberta.
+  intervaloVencimento = setInterval(() => {
+    const estadoAtual = situacaoAssinatura(salaoAtual);
+
+    if (estadoAtual !== ultimoEstadoAssinatura) {
+      window.location.reload();
+      return;
+    }
+
+    if (pagina === "barbeiro") {
+      mostrarAssinaturaBarbeiro(salaoAtual);
+    }
+  }, 60000);
+}
+
 async function verificarSalao(slug) {
   if (!identificadorValido(slug)) {
     throw new Error("LINK_INVALIDO");
@@ -268,6 +333,7 @@ async function iniciarCliente() {
 
   try {
     salaoAtual = await verificarSalao(slugNaUrl);
+    vigiarVencimento(salaoAtual);
 
     document.title = `Agendamento | ${salaoAtual.nome}`;
 
@@ -602,6 +668,7 @@ async function iniciarLogin() {
 
   try {
     salaoAtual = await verificarSalao(slugNaUrl);
+    vigiarVencimento(salaoAtual);
 
     texto("tituloLogin", salaoAtual.nome);
 
@@ -783,8 +850,10 @@ async function iniciarAgenda() {
     });
 
   try {
-    salaoAtual = await verificarSalao(sessaoAtual.salaoId);
-    mostrarAssinaturaBarbeiro(salaoAtual);
+salaoAtual = await verificarSalao(sessaoAtual.salaoId);
+mostrarAssinaturaBarbeiro(salaoAtual);
+vigiarVencimento(salaoAtual);
+
 
 
     const barbeiroDoc = await referenciaBarbeiros(
@@ -844,139 +913,155 @@ if (erro.message === "PLANO_VENCIDO") {
   }
 }
 
-async function carregarAgendaDoDia() {
+
+function carregarAgendaDoDia() {
   const lista = document.getElementById("listaAgendamentos");
+
+  if (cancelarEscutaAgenda) {
+    cancelarEscutaAgenda();
+    cancelarEscutaAgenda = null;
+  }
 
   if (!lista || !sessaoAtual || !salaoAtual) return;
 
-  const dia = document.getElementById("dataFiltro").value ||
-    hojeLocal();
+  const dia = document.getElementById("dataFiltro").value
+    || hojeLocal();
 
   texto("listaAgendamentos", "Carregando atendimentos...");
 
-  try {
-    const snapshot = await referenciaAgendamentos(
-      sessaoAtual.salaoId
-    )
-      .where("barbeiroId", "==", sessaoAtual.barbeiroId)
-      .get();
+  cancelarEscutaAgenda = referenciaAgendamentos(
+    sessaoAtual.salaoId
+  )
+    .where("barbeiroId", "==", sessaoAtual.barbeiroId)
+    .onSnapshot(
+      snapshot => {
+        // Se a assinatura venceu, não exibir agendamentos.
+        if (["vencido", "bloqueado"].includes(
+          situacaoAssinatura(salaoAtual)
+        )) {
+          lista.replaceChildren();
+          return;
+        }
 
-    const atendimentos = snapshot.docs
-      .map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }))
-      .filter(item =>
-        item.data &&
-        item.data.startsWith(`${dia}T`) &&
-        item.status !== "cancelado"
-      )
-      .sort((a, b) => a.data.localeCompare(b.data));
-
-    lista.replaceChildren();
-
-    if (!atendimentos.length) {
-      lista.append(
-        criarElemento(
-          "p",
-          "ajuda",
-          "Nenhum agendamento nesta data."
-        )
-      );
-      return;
-    }
-
-    atendimentos.forEach(ag => {
-      const card = criarElemento("div", "card");
-
-      card.append(
-        criarElemento(
-          "div",
-          "card-titulo",
-          `${ag.data.split("T")[1]} — ${ag.nome}`
-        )
-      );
-
-      card.append(
-        criarElemento(
-          "p",
-          "",
-          `Serviço: ${ag.servico || "Não informado"}`
-        )
-      );
-
-      card.append(
-        criarElemento(
-          "p",
-          "",
-          `Status: ${
-            ag.status === "concluido"
-              ? "Concluído"
-              : "Pendente"
-          }`
-        )
-      );
-
-      const digits = String(ag.whatsapp || "")
-        .replace(/\D/g, "");
-
-      if (digits) {
-        const contato = criarElemento("p");
-
-        const a = criarElemento(
-          "a",
-          "",
-          `WhatsApp: ${digits}`
-        );
-
-        a.style.color = "#d4af37";
-
-        a.href = `https://wa.me/${
-          digits.startsWith("55")
-            ? digits
-            : "55" + digits
-        }`;
-
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-
-        contato.append(a);
-        card.append(contato);
-      }
-
-      if (ag.status !== "concluido") {
-        const botoes = criarElemento("div", "linha-acoes");
-
-        botoes.append(
-          criarBotao(
-            "✓ Concluir",
-            () => mudarStatus(ag.id, "concluido")
+        const atendimentos = snapshot.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }))
+          .filter(item =>
+            item.data &&
+            item.data.startsWith(`${dia}T`) &&
+            item.status !== "cancelado"
           )
-        );
+          .sort((a, b) => a.data.localeCompare(b.data));
 
-        botoes.append(
-          criarBotao(
-            "✕ Cancelar",
-            () => mudarStatus(ag.id, "cancelado"),
-            "btn-pequeno btn-perigo"
-          )
-        );
+        lista.replaceChildren();
 
-        card.append(botoes);
+        if (!atendimentos.length) {
+          lista.append(
+            criarElemento(
+              "p",
+              "ajuda",
+              "Nenhum agendamento nesta data."
+            )
+          );
+          return;
+        }
+
+        atendimentos.forEach(ag => {
+          const card = criarElemento("div", "card");
+
+          card.append(
+            criarElemento(
+              "div",
+              "card-titulo",
+              `${ag.data.split("T")[1]} — ${ag.nome}`
+            )
+          );
+
+          card.append(
+            criarElemento(
+              "p",
+              "",
+              `Serviço: ${ag.servico || "Não informado"}`
+            )
+          );
+
+          card.append(
+            criarElemento(
+              "p",
+              "",
+              `Status: ${
+                ag.status === "concluido"
+                  ? "Concluído"
+                  : "Pendente"
+              }`
+            )
+          );
+
+          const digits = String(ag.whatsapp || "")
+            .replace(/\D/g, "");
+
+          if (digits) {
+            const contato = criarElemento("p");
+            const a = criarElemento(
+              "a",
+              "",
+              `WhatsApp: ${digits}`
+            );
+
+            a.style.color = "#d4af37";
+
+            a.href = `https://wa.me/${
+              digits.startsWith("55")
+                ? digits
+                : "55" + digits
+            }`;
+
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+
+            contato.append(a);
+            card.append(contato);
+          }
+
+          if (ag.status !== "concluido") {
+            const botoes = criarElemento(
+              "div",
+              "linha-acoes"
+            );
+
+            botoes.append(
+              criarBotao(
+                "✓ Concluir",
+                () => mudarStatus(ag.id, "concluido")
+              )
+            );
+
+            botoes.append(
+              criarBotao(
+                "✕ Cancelar",
+                () => mudarStatus(ag.id, "cancelado"),
+                "btn-pequeno btn-perigo"
+              )
+            );
+
+            card.append(botoes);
+          }
+
+          lista.append(card);
+        });
+      },
+      erro => {
+        texto(
+          "listaAgendamentos",
+          "Erro ao atualizar a agenda. Verifique a conexão."
+        );
+        console.error("Erro na agenda em tempo real:", erro);
       }
-
-      lista.append(card);
-    });
-
-  } catch (erro) {
-    texto(
-      "listaAgendamentos",
-      "Erro ao consultar agenda. Verifique o Firebase."
     );
-
-    console.error("Erro ao consultar agenda:", erro);
-  }
 }
+
 
 async function mudarStatus(id, status) {
   if (
@@ -1008,9 +1093,10 @@ async function mudarStatus(id, status) {
       return;
     }
 
-    await ref.update({ status });
 
-    await carregarAgendaDoDia();
+await verificarSalao(sessaoAtual.salaoId);
+await ref.update({ status });
+
 
   } catch (erro) {
     mostrarErro(
