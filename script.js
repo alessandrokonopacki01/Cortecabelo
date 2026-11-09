@@ -696,6 +696,62 @@ function lerSessao() {
 // AGENDA INDIVIDUAL DO BARBEIRO
 // =====================================
 
+
+function mostrarAssinaturaBarbeiro(salao) {
+  const painel = document.getElementById("painelAssinatura");
+  if (!painel) return;
+
+  painel.hidden = false;
+
+  const nomesPlanos = {
+    teste: "Teste grátis",
+    mensal: "Plano mensal",
+    anual: "Plano anual"
+  };
+
+  const nomePlano = nomesPlanos[salao.plano] ||
+    "Plano não configurado";
+
+  texto("tipoPlano", `Plano: ${nomePlano}`);
+
+  if (!salao.vencimentoPlano) {
+    texto("dataVencimento", "Vencimento não configurado.");
+    texto("diasRestantes", "Consulte o suporte.");
+    return;
+  }
+
+  const [ano, mes, dia] = salao.vencimentoPlano.split("-");
+
+  texto(
+    "dataVencimento",
+    `Vencimento: ${dia}/${mes}/${ano}`
+  );
+
+  const dias = diasAteVencimento(salao.vencimentoPlano);
+  const aviso = document.getElementById("avisoRenovacao");
+  const contador = document.getElementById("diasRestantes");
+
+  aviso.hidden = true;
+  contador.classList.remove("urgente");
+
+  if (dias === null) {
+    contador.textContent = "Data de vencimento inválida.";
+  } else if (dias < 0) {
+    contador.textContent = "Assinatura vencida!";
+    contador.classList.add("urgente");
+  } else if (dias === 0) {
+    contador.textContent = "Último dia do seu plano!";
+    contador.classList.add("urgente");
+    aviso.hidden = false;
+  } else if (dias === 1) {
+    contador.textContent = "Falta 1 dia para o vencimento.";
+  } else {
+    contador.textContent =
+      `Faltam ${dias} dias para o vencimento.`;
+  }
+}
+
+
 async function iniciarAgenda() {
   sessaoAtual = lerSessao();
 
@@ -728,6 +784,8 @@ async function iniciarAgenda() {
 
   try {
     salaoAtual = await verificarSalao(sessaoAtual.salaoId);
+    mostrarAssinaturaBarbeiro(salaoAtual);
+
 
     const barbeiroDoc = await referenciaBarbeiros(
       sessaoAtual.salaoId
@@ -761,6 +819,28 @@ async function iniciarAgenda() {
       "listaAgendamentos",
       "Não foi possível acessar a agenda. Peça ao administrador para conferir o acesso."
     );
+
+
+if (erro.message === "PLANO_VENCIDO") {
+  try {
+    const doc = await referenciaSalao(
+      sessaoAtual.salaoId
+    ).get();
+
+    if (doc.exists) {
+      mostrarAssinaturaBarbeiro({
+        id: doc.id,
+        ...doc.data()
+      });
+    }
+  } catch (erroConsulta) {
+    console.error(
+      "Não foi possível consultar a assinatura:",
+      erroConsulta
+    );
+  }
+}
+
   }
 }
 

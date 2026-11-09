@@ -11,10 +11,39 @@
     <p class="kicker" id="nomeSalaoAgenda">ÁREA DO PROFISSIONAL</p>
     <h1 id="tituloAgenda">Minha agenda</h1>
     <p id="mensagemAgenda" class="subtitulo" role="status">Carregando sua agenda...</p>
+
+<section id="painelAssinatura" class="painel-assinatura" hidden>
+  <h3>Minha assinatura</h3>
+
+  <p id="tipoPlano"></p>
+  <p id="dataVencimento"></p>
+
+  <p id="diasRestantes" class="dias-restantes"></p>
+
+  <div id="avisoRenovacao" class="aviso-renovacao" hidden>
+    <strong>⚠️ Sua assinatura vence hoje!</strong>
+    <p>
+      Entre em contato com o suporte para
+      renovar seu plano e evitar a interrupção
+      dos agendamentos.
+    </p>
+  </div>
+</section>
+
     <label for="dataFiltro">Selecione a data</label>
     <input type="date" id="dataFiltro">
     <div id="listaAgendamentos"></div>
     <button id="btnSair" type="button" class="btn-secundario">Sair da conta</button>
+
+<a
+  class="botao-suporte"
+  href="https://wa.me/5542999806150?text=Ol%C3%A1%21%20Preciso%20de%20suporte%20com%20meu%20sistema%20de%20agendamentos."
+  target="_blank"
+  rel="noopener noreferrer"
+>
+  💬 Falar com o suporte
+</a>
+
   </main>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>

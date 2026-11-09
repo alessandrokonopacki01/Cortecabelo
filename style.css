@@ -79,3 +79,72 @@ form button[type="submit"] { margin-top: 19px; }
 
 .migracao { margin-top: 26px; padding: 15px; background: #242424; border: 1px solid #444; border-radius: 8px; }
 .migracao summary { color: var(--ouro); cursor: pointer; font-weight: bold; }
+
+/* ===================================
+   ASSINATURA E SUPORTE
+=================================== */
+
+.painel-assinatura {
+  background: #252525;
+  border: 1px solid #d4af37;
+  border-radius: 12px;
+  padding: 18px;
+  margin: 20px 0;
+  text-align: center;
+}
+
+.painel-assinatura h3 {
+  color: #d4af37;
+  margin: 0 0 15px;
+  font-size: 18px;
+}
+
+.painel-assinatura p {
+  margin: 8px 0;
+  color: #ddd;
+}
+
+.dias-restantes {
+  font-size: 17px;
+  font-weight: bold;
+  color: #d4af37 !important;
+}
+
+.dias-restantes.urgente {
+  color: #ff6969 !important;
+}
+
+.aviso-renovacao {
+  background: rgba(180, 40, 40, 0.15);
+  border: 1px solid #e65c5c;
+  border-radius: 10px;
+  padding: 15px;
+  margin-top: 15px;
+}
+
+.aviso-renovacao strong {
+  color: #ff7979;
+}
+
+.aviso-renovacao p {
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.botao-suporte {
+  display: block;
+  background: #21864b;
+  color: #fff;
+  text-align: center;
+  padding: 14px;
+  border-radius: 9px;
+  margin-top: 18px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+
+.botao-suporte:hover {
+  background: #176b39;
+}
