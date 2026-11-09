@@ -951,6 +951,7 @@ const dataVencimento = [
       }
 
 
+
 tx.set(ref, {
   nome,
   whatsappResponsavel: whatsappSalao,
@@ -960,6 +961,8 @@ tx.set(ref, {
   ativo: true,
   criadoEm: firebase.firestore.FieldValue.serverTimestamp()
 });
+});
+
 
 
     document.getElementById("formSalao").reset();
@@ -1044,21 +1047,6 @@ async function carregarSaloes() {
         )
       );
 
-if (b.whatsapp) {
-  const contato = criarElemento("a", "link-discreto",
-    `WhatsApp: ${b.whatsapp}`);
-
-  contato.href = `https://wa.me/${
-    b.whatsapp.startsWith("55")
-      ? b.whatsapp
-      : "55" + b.whatsapp
-  }`;
-
-  contato.target = "_blank";
-  contato.rel = "noopener noreferrer";
-
-  card.append(contato);
-}
 
 card.append(
   criarElemento(
@@ -1335,6 +1323,22 @@ document.getElementById("vencimentoSalao").value =
       links.append(bloco);
     }
 
+
+
+    await carregarBarbeirosAdmin(id);
+
+    painel.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+
+  } catch (erro) {
+    mostrarErro(
+      "Não foi possível abrir este salão.",
+      erro
+    );
+  }
+}
 async function salvarAssinatura(evento) {
   evento.preventDefault();
 
@@ -1392,22 +1396,6 @@ async function salvarAssinatura(evento) {
     botao.disabled = false;
   }
 }
-
-    await carregarBarbeirosAdmin(id);
-
-    painel.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
-
-  } catch (erro) {
-    mostrarErro(
-      "Não foi possível abrir este salão.",
-      erro
-    );
-  }
-}
-
 // =====================================
 // ADMIN — GESTÃO DOS BARBEIROS
 // =====================================
