@@ -202,6 +202,41 @@ function mostrarErro(mensagem, erro) {
 }
 
 
+function acompanharLiberacao(slug) {
+  if (!identificadorValido(slug)) return;
+
+  if (cancelarEscutaSalao) {
+    cancelarEscutaSalao();
+    cancelarEscutaSalao = null;
+  }
+
+  cancelarEscutaSalao = referenciaSalao(slug).onSnapshot(
+    doc => {
+      if (!doc.exists) return;
+
+      const salao = {
+        id: doc.id,
+        ...doc.data()
+      };
+
+      const situacao = situacaoAssinatura(salao);
+
+      if (
+        situacao === "ativo" ||
+        situacao === "ultimo_dia" ||
+        situacao === "sem_plano"
+      ) {
+        cancelarEscutaSalao();
+        cancelarEscutaSalao = null;
+        window.location.reload();
+      }
+    },
+    erro => {
+      console.error("Erro ao acompanhar liberação:", erro);
+    }
+  );
+}
+
 function vigiarVencimento(salao) {
   if (cancelarEscutaSalao) {
     cancelarEscutaSalao();
@@ -354,6 +389,10 @@ async function iniciarCliente() {
 
   } catch (erro) {
     form.hidden = true;
+
+if (["PLANO_VENCIDO", "SALAO_INATIVO"].includes(erro.message)) {
+  acompanharLiberacao(slugNaUrl);
+}
 
     texto("mensagemSalao", mensagemSalaoErro(erro));
 
@@ -683,6 +722,11 @@ async function iniciarLogin() {
 
   } catch (erro) {
     texto("mensagemLogin", mensagemSalaoErro(erro));
+
+if (["PLANO_VENCIDO", "SALAO_INATIVO"].includes(erro.message)) {
+  acompanharLiberacao(slugNaUrl);
+}
+
   }
 }
 
@@ -888,6 +932,11 @@ vigiarVencimento(salaoAtual);
       "listaAgendamentos",
       "Não foi possível acessar a agenda. Peça ao administrador para conferir o acesso."
     );
+
+if (["PLANO_VENCIDO", "SALAO_INATIVO"].includes(erro.message)) {
+  acompanharLiberacao(sessaoAtual.salaoId);
+}
+
 
 
 if (erro.message === "PLANO_VENCIDO") {
