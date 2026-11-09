@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Administração | Barbearias</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body data-page="admin">
   <script>
     // Mantida, a pedido, a verificação simples de senha da versão original.
@@ -32,6 +34,12 @@
           <label for="slugSalao">Identificador do link</label>
           <input id="slugSalao" type="text" placeholder="Ex.: barbearia-central" maxlength="45" required>
         </div>
+
+        <div>
+          <label for="whatsappSalao">WhatsApp do responsável</label>
+          <input id="whatsappSalao" type="tel" placeholder="(42) 99999-9999" maxlength="20" required>
+        </div>
+
         <button type="submit">Cadastrar salão</button>
       </form>
       <p class="ajuda">Cada salão tem um link exclusivo. O identificador não pode ser alterado depois.</p>
@@ -39,12 +47,40 @@
 
     <section class="secao">
       <h2>2. Salões cadastrados</h2>
-      <div id="listaSaloes"><p class="ajuda">Carregando...</p></div>
+      <div id="listaSaloes">
+        <p class="ajuda">Carregando...</p>
+      </div>
     </section>
 
     <section class="secao" id="painelSalao" hidden>
       <h2 id="tituloPainelSalao">Profissionais do salão</h2>
       <div id="linksSalao" class="links-salao"></div>
+
+      <h3>Assinatura e contato do salão</h3>
+
+      <form id="formAssinatura" class="form-grid">
+        <div>
+          <label for="whatsappResponsavel">WhatsApp do responsável</label>
+          <input id="whatsappResponsavel" type="tel" placeholder="(42) 99999-9999" required>
+        </div>
+
+        <div>
+          <label for="planoSalao">Plano contratado</label>
+          <select id="planoSalao" required>
+            <option value="teste">Teste grátis</option>
+            <option value="mensal">Mensal</option>
+            <option value="anual">Anual</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="vencimentoSalao">Data de vencimento</label>
+          <input id="vencimentoSalao" type="date" required>
+        </div>
+
+        <button type="submit">Salvar informações</button>
+      </form>
+
       <h3>Cadastrar barbeiro</h3>
       <form id="formBarbeiro" class="form-grid">
         <div>
@@ -59,20 +95,30 @@
           <label for="senhaBarbeiro">Senha</label>
           <input id="senhaBarbeiro" type="password" placeholder="Senha" required>
         </div>
+
+        <div>
+          <label for="whatsappBarbeiro">WhatsApp do barbeiro</label>
+          <input id="whatsappBarbeiro" type="tel" placeholder="(42) 99999-9999" maxlength="20" required>
+        </div>
+
         <button type="submit">Cadastrar barbeiro neste salão</button>
       </form>
       <h3>Barbeiros deste salão</h3>
       <div id="listaBarbeirosAdmin"></div>
       <details class="migracao">
         <summary>Já tenho barbeiros e agendamentos no sistema antigo</summary>
-        <p class="ajuda">Copie os dados antigos para este salão sem apagar as coleções originais do Firebase. Faça isso apenas em um salão novo e vazio.</p>
-        <button id="btnMigrarAntigo" type="button" class="btn-secundario">Importar os dados antigos para este salão</button>
+        <p class="ajuda">Copie os dados antigos para este salão sem apagar as coleções originais do Firebase. Faça isso
+          apenas em um salão novo e vazio.</p>
+        <button id="btnMigrarAntigo" type="button" class="btn-secundario">Importar os dados antigos para este
+          salão</button>
       </details>
     </section>
-    <p class="aviso">Esta versão mantém o login anterior. Os dados no Firebase ainda precisam de regras de acesso adequadas antes do uso comercial.</p>
+    <p class="aviso">Esta versão mantém o login anterior. Os dados no Firebase ainda precisam de regras de acesso
+      adequadas antes do uso comercial.</p>
   </main>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
   <script src="script.js"></script>
 </body>
+
 </html>

@@ -887,6 +887,9 @@ async function iniciarAdmin() {
   document.getElementById("btnMigrarAntigo")
     .addEventListener("click", migrarAntigos);
 
+document.getElementById("formAssinatura")
+  .addEventListener("submit", salvarAssinatura);
+
   await carregarSaloes();
 }
 
@@ -900,6 +903,29 @@ async function cadastrarSalao(evento) {
   const id = document.getElementById(
     "slugSalao"
   ).value.trim().toLowerCase();
+
+
+const whatsappSalao = document
+  .getElementById("whatsappSalao")
+  .value.replace(/\D/g, "");
+
+if (whatsappSalao.length < 10 || whatsappSalao.length > 13) {
+  alert("Informe um WhatsApp válido para o responsável.");
+  return;
+}
+
+const hoje = hojeLocal();
+const vencimento = new Date(
+  `${hoje}T12:00:00`
+);
+vencimento.setDate(vencimento.getDate() + 30);
+
+const dataVencimento = [
+  vencimento.getFullYear(),
+  String(vencimento.getMonth() + 1).padStart(2, "0"),
+  String(vencimento.getDate()).padStart(2, "0")
+].join("-");
+
 
   if (nome.length < 2 || !identificadorValido(id)) {
     alert(
@@ -924,12 +950,17 @@ async function cadastrarSalao(evento) {
         throw new Error("SLUG_DUPLICADO");
       }
 
-      tx.set(ref, {
-        nome,
-        ativo: true,
-        criadoEm: firebase.firestore.FieldValue.serverTimestamp()
-      });
-    });
+
+tx.set(ref, {
+  nome,
+  whatsappResponsavel: whatsappSalao,
+  plano: "teste",
+  inicioPlano: hoje,
+  vencimentoPlano: dataVencimento,
+  ativo: true,
+  criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+});
+
 
     document.getElementById("formSalao").reset();
 
@@ -1012,6 +1043,50 @@ async function carregarSaloes() {
           `Link: ?b=${salao.id}`
         )
       );
+
+if (b.whatsapp) {
+  const contato = criarElemento("a", "link-discreto",
+    `WhatsApp: ${b.whatsapp}`);
+
+  contato.href = `https://wa.me/${
+    b.whatsapp.startsWith("55")
+      ? b.whatsapp
+      : "55" + b.whatsapp
+  }`;
+
+  contato.target = "_blank";
+  contato.rel = "noopener noreferrer";
+
+  card.append(contato);
+}
+
+card.append(
+  criarElemento(
+    "p",
+    "ajuda",
+    `Plano: ${salao.plano || "Não definido"} | ` +
+    `Vencimento: ${salao.vencimentoPlano || "Não definido"}`
+  )
+);
+
+if (salao.whatsappResponsavel) {
+  const contato = criarElemento(
+    "a",
+    "link-discreto",
+    `WhatsApp do responsável: ${salao.whatsappResponsavel}`
+  );
+
+  contato.href = `https://wa.me/${
+    salao.whatsappResponsavel.startsWith("55")
+      ? salao.whatsappResponsavel
+      : "55" + salao.whatsappResponsavel
+  }`;
+
+  contato.target = "_blank";
+  contato.rel = "noopener noreferrer";
+
+  card.append(contato);
+}
 
       const acoes = criarElemento("div", "linha-acoes");
 
@@ -1209,6 +1284,18 @@ async function abrirSalaoAdmin(id) {
       throw new Error("SALAO_NAO_ENCONTRADO");
     }
 
+const dadosSalao = doc.data();
+
+document.getElementById("whatsappResponsavel").value =
+  dadosSalao.whatsappResponsavel || "";
+
+document.getElementById("planoSalao").value =
+  dadosSalao.plano || "teste";
+
+document.getElementById("vencimentoSalao").value =
+  dadosSalao.vencimentoPlano || "";
+
+
     texto(
       "tituloPainelSalao",
       `3. Profissionais: ${doc.data().nome}`
@@ -1247,6 +1334,64 @@ async function abrirSalaoAdmin(id) {
       bloco.append(a);
       links.append(bloco);
     }
+
+async function salvarAssinatura(evento) {
+  evento.preventDefault();
+
+  if (!salaoAdminId) {
+    alert("Selecione um salão primeiro.");
+    return;
+  }
+
+  const whatsapp = document
+    .getElementById("whatsappResponsavel")
+    .value.replace(/\D/g, "");
+
+  const plano = document.getElementById("planoSalao").value;
+  const vencimento = document.getElementById("vencimentoSalao").value;
+
+  if (whatsapp.length < 10 || whatsapp.length > 13) {
+    alert("Informe um WhatsApp válido.");
+    return;
+  }
+
+  if (!["teste", "mensal", "anual"].includes(plano)) {
+    alert("Selecione um plano válido.");
+    return;
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(vencimento)) {
+    alert("Informe uma data de vencimento válida.");
+    return;
+  }
+
+  const botao = evento.currentTarget.querySelector(
+    'button[type="submit"]'
+  );
+
+  botao.disabled = true;
+
+  try {
+    await referenciaSalao(salaoAdminId).update({
+      whatsappResponsavel: whatsapp,
+      plano: plano,
+      vencimentoPlano: vencimento,
+      atualizadoEm: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    alert("Informações do salão atualizadas!");
+
+    await carregarSaloes();
+
+  } catch (erro) {
+    mostrarErro(
+      "Não foi possível salvar as informações do salão.",
+      erro
+    );
+  } finally {
+    botao.disabled = false;
+  }
+}
 
     await carregarBarbeirosAdmin(id);
 
@@ -1362,6 +1507,20 @@ async function cadastrarBarbeiro(evento) {
     "senhaBarbeiro"
   ).value;
 
+
+const whatsappBarbeiro = document
+  .getElementById("whatsappBarbeiro")
+  .value.replace(/\D/g, "");
+
+if (
+  whatsappBarbeiro.length < 10 ||
+  whatsappBarbeiro.length > 13
+) {
+  alert("Informe um WhatsApp válido para o barbeiro.");
+  return;
+}
+
+
   if (!nome || !login || !senha) {
     alert("Preencha todos os campos.");
     return;
@@ -1393,12 +1552,15 @@ async function cadastrarBarbeiro(evento) {
       return;
     }
 
-    await referenciaBarbeiros(salaoAdminId).add({
-      nome,
-      login,
-      senha,
-      ativo: true
-    });
+
+await referenciaBarbeiros(salaoAdminId).add({
+  nome,
+  login,
+  senha,
+  whatsapp: whatsappBarbeiro,
+  ativo: true
+});
+
 
     document.getElementById("formBarbeiro").reset();
 
