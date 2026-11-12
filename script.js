@@ -368,6 +368,7 @@ async function iniciarCliente() {
 
   try {
     salaoAtual = await verificarSalao(slugNaUrl);
+    window.configurarPwaSalao?.(salaoAtual);
     vigiarVencimento(salaoAtual);
 
     document.title = `Agendamento | ${salaoAtual.nome}`;
@@ -707,6 +708,7 @@ async function iniciarLogin() {
 
   try {
     salaoAtual = await verificarSalao(slugNaUrl);
+    window.configurarPwaSalao?.(salaoAtual);
     vigiarVencimento(salaoAtual);
 
     texto("tituloLogin", salaoAtual.nome);
@@ -895,6 +897,7 @@ async function iniciarAgenda() {
 
   try {
 salaoAtual = await verificarSalao(sessaoAtual.salaoId);
+window.configurarPwaSalao?.(salaoAtual);
 mostrarAssinaturaBarbeiro(salaoAtual);
 vigiarVencimento(salaoAtual);
 
