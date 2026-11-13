@@ -1,64 +1,205 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
   <title>Agenda do barbeiro</title>
+
   <link rel="stylesheet" href="style.css">
 
-<meta name="theme-color" content="#111111">
+  <meta name="theme-color" content="#111111">
 
-<meta name="apple-mobile-web-app-capable" content="yes">
+  <meta
+    name="apple-mobile-web-app-capable"
+    content="yes"
+  >
 
-<meta name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent">
+  <meta
+    name="apple-mobile-web-app-status-bar-style"
+    content="black-translucent"
+  >
 
-<link rel="apple-touch-icon" href="/img/pwa-192.png">
+  <link
+    rel="apple-touch-icon"
+    href="/img/pwa-192.png"
+  >
 
-<script src="pwa.js"></script>
+  <style>
+    .painel-notificacoes {
+      margin: 20px 0;
+      padding: 18px;
+      border: 1px solid #d4af37;
+      border-radius: 12px;
+      background: #252525;
+    }
 
+    .painel-notificacoes h3 {
+      margin: 0 0 10px;
+      color: #d4af37;
+      font-size: 18px;
+    }
+
+    .painel-notificacoes p {
+      color: #ccc;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .painel-notificacoes button {
+      margin-top: 10px;
+    }
+
+    .painel-notificacoes .teste {
+      background: #414141;
+      color: white;
+    }
+
+    #statusNotificacoes {
+      margin-top: 12px;
+      font-size: 13px;
+    }
+  </style>
+
+  <script src="pwa.js"></script>
 </head>
+
 <body data-page="barbeiro">
+
   <main class="container">
-    <p class="kicker" id="nomeSalaoAgenda">ÁREA DO PROFISSIONAL</p>
-    <h1 id="tituloAgenda">Minha agenda</h1>
-    <p id="mensagemAgenda" class="subtitulo" role="status">Carregando sua agenda...</p>
 
-<section id="painelAssinatura" class="painel-assinatura" hidden>
-  <h3>Minha assinatura</h3>
-
-  <p id="tipoPlano"></p>
-  <p id="dataVencimento"></p>
-
-  <p id="diasRestantes" class="dias-restantes"></p>
-
-  <div id="avisoRenovacao" class="aviso-renovacao" hidden>
-    <strong>⚠️ Sua assinatura vence hoje!</strong>
-    <p>
-      Entre em contato com o suporte para
-      renovar seu plano e evitar a interrupção
-      dos agendamentos.
+    <p class="kicker" id="nomeSalaoAgenda">
+      ÁREA DO PROFISSIONAL
     </p>
-  </div>
-</section>
 
-    <label for="dataFiltro">Selecione a data</label>
-    <input type="date" id="dataFiltro">
+    <h1 id="tituloAgenda">
+      Minha agenda
+    </h1>
+
+    <p
+      id="mensagemAgenda"
+      class="subtitulo"
+      role="status"
+    >
+      Carregando sua agenda...
+    </p>
+
+    <!-- ASSINATURA -->
+
+    <section
+      id="painelAssinatura"
+      class="painel-assinatura"
+      hidden
+    >
+      <h3>Minha assinatura</h3>
+
+      <p id="tipoPlano"></p>
+      <p id="dataVencimento"></p>
+      <p
+        id="diasRestantes"
+        class="dias-restantes"
+      ></p>
+
+      <div
+        id="avisoRenovacao"
+        class="aviso-renovacao"
+        hidden
+      >
+        <strong>
+          ⚠️ Sua assinatura vence hoje!
+        </strong>
+
+        <p>
+          Entre em contato com o suporte
+          para renovar seu plano e evitar
+          a interrupção dos agendamentos.
+        </p>
+      </div>
+    </section>
+
+    <!-- NOTIFICAÇÕES -->
+
+    <section class="painel-notificacoes">
+
+      <h3>🔔 Notificações de agendamentos</h3>
+
+      <p>
+        Ative as notificações para receber
+        avisos no celular sobre seus
+        próximos atendimentos.
+      </p>
+
+      <button
+        id="btnAtivarNotificacoes"
+        type="button"
+      >
+        Ativar notificações
+      </button>
+
+      <button
+        id="btnTestarNotificacoes"
+        type="button"
+        class="teste"
+        hidden
+      >
+        Enviar notificação de teste
+      </button>
+
+      <p
+        id="statusNotificacoes"
+        role="status"
+      >
+        Verificando permissões...
+      </p>
+
+    </section>
+
+    <!-- AGENDA -->
+
+    <label for="dataFiltro">
+      Selecione a data
+    </label>
+
+    <input
+      type="date"
+      id="dataFiltro"
+    >
+
     <div id="listaAgendamentos"></div>
-    <button id="btnSair" type="button" class="btn-secundario">Sair da conta</button>
 
-<a
-  class="botao-suporte"
-  href="https://wa.me/5542999806150?text=Ol%C3%A1%21%20Preciso%20de%20suporte%20com%20meu%20sistema%20de%20agendamentos."
-  target="_blank"
-  rel="noopener noreferrer"
->
-  💬 Falar com o suporte
-</a>
+    <button
+      id="btnSair"
+      type="button"
+      class="btn-secundario"
+    >
+      Sair da conta
+    </button>
+
+    <!-- SUPORTE -->
+
+    <a
+      class="botao-suporte"
+      href="https://wa.me/5542999806150?text=Ol%C3%A1%21%20Preciso%20de%20suporte%20com%20meu%20sistema%20de%20agendamentos."
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      💬 Falar com o suporte
+    </a>
 
   </main>
+
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
   <script src="script.js"></script>
+
+  <script src="notificacoes-barbeiro.js"></script>
+
 </body>
 </html>
