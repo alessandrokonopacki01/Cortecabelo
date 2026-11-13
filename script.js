@@ -446,6 +446,7 @@ async function carregarBarbeirosCliente() {
   }
 }
 
+
 async function carregarHorarios() {
   const numeroRequisicao = ++carregamentoHorarios;
 
@@ -469,22 +470,55 @@ async function carregarHorarios() {
   }
 
   container.append(
-    criarElemento("p", "ajuda", "Consultando horários...")
+    criarElemento(
+      "p",
+      "ajuda",
+      "Consultando horários..."
+    )
   );
 
   try {
+    // Busca os horários atualizados do barbeiro.
+    const profissional = await referenciaBarbeiros(
+      salaoAtual.id
+    ).doc(barbeiroId).get();
+
+    if (numeroRequisicao !== carregamentoHorarios) {
+      return;
+    }
+
+    if (
+      !profissional.exists ||
+      profissional.data().ativo === false
+    ) {
+      throw new Error("BARBEIRO_INATIVO");
+    }
+
+    const configuracao =
+      profissional.data().horariosFuncionamento ||
+      window.HorariosCorte.horarioPadrao();
+
+    const horarios =
+      window.HorariosCorte.listarHorarios(
+        configuracao,
+        dia
+      );
+
+    // Consulta horários já reservados.
     const snapshot = await referenciaAgendamentos(
       salaoAtual.id
     )
       .where("barbeiroId", "==", barbeiroId)
       .get();
 
-    if (numeroRequisicao !== carregamentoHorarios) return;
+    if (numeroRequisicao !== carregamentoHorarios) {
+      return;
+    }
 
     const ocupados = new Set();
 
-    snapshot.forEach(doc => {
-      const agendamento = doc.data();
+    snapshot.forEach(documento => {
+      const agendamento = documento.data();
 
       if (
         agendamento.data &&
@@ -499,58 +533,73 @@ async function carregarHorarios() {
 
     container.replaceChildren();
 
+    if (!horarios.length) {
+      container.append(
+        criarElemento(
+          "p",
+          "ajuda",
+          "Este profissional não atende nesta data."
+        )
+      );
+      return;
+    }
+
     let totalDisponivel = 0;
 
-    for (let h = 9; h < 18; h++) {
-      for (const minuto of ["00", "30"]) {
-        const horario =
-          `${String(h).padStart(2, "0")}:${minuto}`;
-
-        if (horarioJaPassou(dia, horario)) continue;
-
-        const ocupado = ocupados.has(horario);
-
-        const b = criarElemento(
-          "button",
-          `horario-btn${ocupado ? " ocupado" : ""}`,
-          horario
-        );
-
-        b.type = "button";
-        b.disabled = ocupado;
-        b.setAttribute("aria-pressed", "false");
-
-        if (!ocupado) {
-          totalDisponivel++;
-
-
-b.addEventListener("click", () => {
-  const estavaSelecionado = b.classList.contains("selected");
-
-  // Limpa qualquer seleção anterior
-  container.querySelectorAll(".horario-btn").forEach(btn => {
-    btn.classList.remove("selected");
-    btn.setAttribute("aria-pressed", "false");
-  });
-
-  const campoHora = document.getElementById("horaSelecionada");
-
-  // Se clicou novamente, desmarca o horário
-  if (estavaSelecionado) {
-    campoHora.value = "";
-    return;
-  }
-
-  // Caso contrário, seleciona o novo horário
-  b.classList.add("selected");
-  b.setAttribute("aria-pressed", "true");
-  campoHora.value = horario;
-});
-
-        }
-
-        container.appendChild(b);
+    for (const horario of horarios) {
+      if (horarioJaPassou(dia, horario)) {
+        continue;
       }
+
+      const ocupado = ocupados.has(horario);
+
+      const botao = criarElemento(
+        "button",
+        `horario-btn${ocupado ? " ocupado" : ""}`,
+        horario
+      );
+
+      botao.type = "button";
+      botao.disabled = ocupado;
+      botao.setAttribute("aria-pressed", "false");
+
+      if (!ocupado) {
+        totalDisponivel++;
+
+        botao.addEventListener("click", () => {
+          const selecionado =
+            botao.classList.contains("selected");
+
+          container.querySelectorAll(
+            ".horario-btn"
+          ).forEach(b => {
+            b.classList.remove("selected");
+            b.setAttribute(
+              "aria-pressed",
+              "false"
+            );
+          });
+
+          const campo = document.getElementById(
+            "horaSelecionada"
+          );
+
+          if (selecionado) {
+            campo.value = "";
+            return;
+          }
+
+          botao.classList.add("selected");
+          botao.setAttribute(
+            "aria-pressed",
+            "true"
+          );
+
+          campo.value = horario;
+        });
+      }
+
+      container.appendChild(botao);
     }
 
     if (!totalDisponivel) {
@@ -558,13 +607,20 @@ b.addEventListener("click", () => {
         criarElemento(
           "p",
           "ajuda",
-          "Não há horários disponíveis para esta data."
+          "Não há horários disponíveis nesta data."
         )
       );
     }
 
   } catch (erro) {
-    if (numeroRequisicao !== carregamentoHorarios) return;
+    if (numeroRequisicao !== carregamentoHorarios) {
+      return;
+    }
+
+    console.error(
+      "Erro ao carregar horários:",
+      erro
+    );
 
     container.replaceChildren(
       criarElemento(
@@ -573,10 +629,9 @@ b.addEventListener("click", () => {
         "Não foi possível consultar os horários."
       )
     );
-
-    console.error("Erro ao carregar horários:", erro);
   }
 }
+
 
 async function salvarAgendamento(evento) {
   evento.preventDefault();
@@ -638,8 +693,43 @@ async function salvarAgendamento(evento) {
       salaoAtual.id
     ).doc(idAgenda);
 
-    await db.runTransaction(async transacao => {
-      const existente = await transacao.get(referencia);
+
+await db.runTransaction(async transacao => {
+  // Consulta o expediente atualizado dentro
+  // da mesma transação do agendamento.
+  const barbeiroRef = referenciaBarbeiros(
+    salaoAtual.id
+  ).doc(barbeiroId);
+
+  const barbeiroAtual = await transacao.get(
+    barbeiroRef
+  );
+
+  const existente = await transacao.get(
+    referencia
+  );
+
+  if (
+    !barbeiroAtual.exists ||
+    barbeiroAtual.data().ativo === false
+  ) {
+    throw new Error("BARBEIRO_INATIVO");
+  }
+
+  const expediente =
+    barbeiroAtual.data().horariosFuncionamento ||
+    window.HorariosCorte.horarioPadrao();
+
+  if (
+    !window.HorariosCorte.horarioPermitido(
+      expediente,
+      dia,
+      hora
+    )
+  ) {
+    throw new Error("FORA_DO_EXPEDIENTE");
+  }
+
 
       if (
         existente.exists &&
