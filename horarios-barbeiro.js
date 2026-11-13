@@ -399,40 +399,44 @@ function preencher(dias) {
 }
 
 
-  function coletar() {
-    const dias = {};
+ 
+function coletar() {
+  const dias = {};
 
-    for (const card of formulario.children) {
-      const id = card.dataset.dia;
+  // Percorre apenas os cartões dos dias.
+  const cartoes = formulario.querySelectorAll(".hc-dia");
 
-      const ativo = card.querySelector(
-        ".hc-ativo"
-      ).checked;
+  for (const card of cartoes) {
+    const id = card.dataset.dia;
 
-      const periodos = [
-        ...card.querySelectorAll(".hc-periodo")
-      ].map(linha => ({
-        inicio: linha.querySelector(
-          ".hc-inicio"
-        ).value,
+    const checkbox = card.querySelector(".hc-ativo");
 
-        fim: linha.querySelector(
-          ".hc-fim"
-        ).value
-      }));
-
-      periodos.sort((a, b) =>
-        a.inicio.localeCompare(b.inicio)
-      );
-
-      dias[id] = {
-        ativo,
-        periodos
-      };
+    if (!id || !checkbox) {
+      continue;
     }
 
-    return dias;
+    const ativo = checkbox.checked;
+
+    const periodos = [
+      ...card.querySelectorAll(".hc-periodo")
+    ].map(linha => ({
+      inicio: linha.querySelector(".hc-inicio").value,
+      fim: linha.querySelector(".hc-fim").value
+    }));
+
+    periodos.sort((a, b) =>
+      a.inicio.localeCompare(b.inicio)
+    );
+
+    dias[id] = {
+      ativo,
+      periodos
+    };
   }
+
+  return dias;
+}
+
 
   async function salvar(evento) {
     evento.preventDefault();
