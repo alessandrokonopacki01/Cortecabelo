@@ -757,11 +757,23 @@ await db.runTransaction(async transacao => {
 
     await carregarHorarios();
 
+ 
   } catch (erro) {
-    if (erro.message === "HORARIO_OCUPADO") {
+
+    if (erro.message === "FORA_DO_EXPEDIENTE") {
       alert(
-        "Esse horário acabou de ser reservado. Escolha outro!"
+        "O barbeiro alterou seu horário de funcionamento. " +
+        "Escolha outro horário."
       );
+
+      await carregarHorarios();
+
+    } else if (erro.message === "HORARIO_OCUPADO") {
+      alert(
+        "Esse horário acabou de ser reservado. " +
+        "Escolha outro!"
+      );
+
       await carregarHorarios();
 
     } else if (
@@ -769,7 +781,8 @@ await db.runTransaction(async transacao => {
       erro.message === "BARBEIRO_INATIVO"
     ) {
       alert(
-        "Agendamentos indisponíveis para este salão ou profissional."
+        "Agendamentos indisponíveis para " +
+        "este salão ou profissional."
       );
 
     } else {
@@ -778,6 +791,9 @@ await db.runTransaction(async transacao => {
         erro
       );
     }
+
+  }
+
 
   } finally {
     botao.disabled = false;
