@@ -569,13 +569,51 @@ function coletar() {
       .hc-painel [hidden] {
         display: none !important;
       }
+
+.hc-resumo {
+  cursor: pointer;
+  font-size: 17px;
+  font-weight: 700;
+  color: #d4af37;
+  padding: 6px 0;
+  list-style-position: inside;
+}
+
+.hc-resumo::marker {
+  color: #d4af37;
+}
+
+.hc-conteudo {
+  padding-top: 16px;
+  border-top: 1px solid #444;
+  margin-top: 12px;
+}
+
+.hc-painel[open] .hc-resumo {
+  margin-bottom: 4px;
+}
+
     `;
 
     document.head.append(estilo);
 
-    const painel = criar("section", {
-      className: "hc-painel"
-    });
+
+const painel = criar("details", {
+  className: "hc-painel"
+});
+
+const cabecalhoRetratil = criar(
+  "summary",
+  {
+    className: "hc-resumo"
+  },
+  "🕒 Meus horários de funcionamento"
+);
+
+const conteudoRetratil = criar("div", {
+  className: "hc-conteudo"
+});
+
 
     const titulo = criar(
       "h2",
@@ -612,11 +650,17 @@ function coletar() {
       salvar
     );
 
-    painel.append(
-      titulo,
-      descricao,
-      formulario
-    );
+
+conteudoRetratil.append(
+  descricao,
+  formulario
+);
+
+painel.append(
+  cabecalhoRetratil,
+  conteudoRetratil
+);
+
 
     const assinatura = document.getElementById(
       "painelAssinatura"
