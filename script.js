@@ -633,6 +633,7 @@ async function carregarHorarios() {
 }
 
 
+
 async function salvarAgendamento(evento) {
   evento.preventDefault();
 
@@ -645,6 +646,7 @@ async function salvarAgendamento(evento) {
 
   const barbeiroId = document.getElementById("barbeiro").value;
   const barbeiro = barbeirosAtuais.get(barbeiroId);
+
   const servico = document.getElementById("servico").value;
   const dia = document.getElementById("data").value;
   const hora = document.getElementById("horaSelecionada").value;
@@ -659,7 +661,8 @@ async function salvarAgendamento(evento) {
     !hora
   ) {
     alert(
-      "Preencha os dados, confira o WhatsApp e selecione um horário."
+      "Preencha os dados, confira o WhatsApp " +
+      "e selecione um horário."
     );
     return;
   }
@@ -675,16 +678,9 @@ async function salvarAgendamento(evento) {
   try {
     await verificarSalao(salaoAtual.id);
 
-    const profissional = await referenciaBarbeiros(
+    const barbeiroRef = referenciaBarbeiros(
       salaoAtual.id
-    ).doc(barbeiroId).get();
-
-    if (
-      !profissional.exists ||
-      profissional.data().ativo === false
-    ) {
-      throw new Error("BARBEIRO_INATIVO");
-    }
+    ).doc(barbeiroId);
 
     const idAgenda =
       `${barbeiroId}_${dia}_${hora.replace(":", "-")}`;
@@ -693,43 +689,36 @@ async function salvarAgendamento(evento) {
       salaoAtual.id
     ).doc(idAgenda);
 
+    await db.runTransaction(async transacao => {
+      // Todas as leituras antes das gravações.
+      const barbeiroAtual = await transacao.get(
+        barbeiroRef
+      );
 
-await db.runTransaction(async transacao => {
-  // Consulta o expediente atualizado dentro
-  // da mesma transação do agendamento.
-  const barbeiroRef = referenciaBarbeiros(
-    salaoAtual.id
-  ).doc(barbeiroId);
+      const existente = await transacao.get(
+        referencia
+      );
 
-  const barbeiroAtual = await transacao.get(
-    barbeiroRef
-  );
+      if (
+        !barbeiroAtual.exists ||
+        barbeiroAtual.data().ativo === false
+      ) {
+        throw new Error("BARBEIRO_INATIVO");
+      }
 
-  const existente = await transacao.get(
-    referencia
-  );
+      const expediente =
+        barbeiroAtual.data().horariosFuncionamento ||
+        window.HorariosCorte.horarioPadrao();
 
-  if (
-    !barbeiroAtual.exists ||
-    barbeiroAtual.data().ativo === false
-  ) {
-    throw new Error("BARBEIRO_INATIVO");
-  }
-
-  const expediente =
-    barbeiroAtual.data().horariosFuncionamento ||
-    window.HorariosCorte.horarioPadrao();
-
-  if (
-    !window.HorariosCorte.horarioPermitido(
-      expediente,
-      dia,
-      hora
-    )
-  ) {
-    throw new Error("FORA_DO_EXPEDIENTE");
-  }
-
+      if (
+        !window.HorariosCorte.horarioPermitido(
+          expediente,
+          dia,
+          hora
+        )
+      ) {
+        throw new Error("FORA_DO_EXPEDIENTE");
+      }
 
       if (
         existente.exists &&
@@ -747,19 +736,20 @@ await db.runTransaction(async transacao => {
         servico,
         data: `${dia}T${hora}`,
         status: "pendente",
-        criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+        criadoEm: firebase.firestore.FieldValue
+          .serverTimestamp()
       });
     });
 
     alert("Agendamento realizado! Até breve.");
 
-    document.getElementById("horaSelecionada").value = "";
+    document.getElementById(
+      "horaSelecionada"
+    ).value = "";
 
     await carregarHorarios();
 
- 
   } catch (erro) {
-
     if (erro.message === "FORA_DO_EXPEDIENTE") {
       alert(
         "O barbeiro alterou seu horário de funcionamento. " +
@@ -792,13 +782,11 @@ await db.runTransaction(async transacao => {
       );
     }
 
-  }
-
-
   } finally {
     botao.disabled = false;
   }
 }
+
 
 // =====================================
 // LOGIN DOS BARBEIROS
